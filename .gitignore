@@ -1,5 +1,8 @@
 .env
-.build/
 *.o
 *.swp
 .DS_Store
+
+# SPM build artifacts (but keep .build/*.md knowledge files)
+.build/*
+!.build/*.md
