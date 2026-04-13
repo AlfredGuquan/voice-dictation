@@ -242,7 +242,10 @@ final class DictationPipeline {
             self?.stopAndProcess()
         }
 
-        let panel = FloatingPillPanel.create()
+        guard let panel = FloatingPillPanel.create() else {
+            print("[Pipeline] No screen available for pill panel")
+            return
+        }
         panel.contentView = vc.view
         panel.contentViewController = vc
 
@@ -289,11 +292,17 @@ final class DictationPipeline {
     // MARK: - Notifications
 
     private func showNotification(_ title: String, body: String) {
+        let escapedBody = body
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        let escapedTitle = title
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
         task.arguments = [
             "-e",
-            "display notification \"\(body)\" with title \"\(title)\"",
+            "display notification \"\(escapedBody)\" with title \"\(escapedTitle)\"",
         ]
         try? task.run()
     }

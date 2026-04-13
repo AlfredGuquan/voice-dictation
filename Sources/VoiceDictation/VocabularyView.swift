@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 
 /// Vocabulary management UI: recognition words and replacement mappings.
@@ -70,6 +71,9 @@ struct VocabularyView: View {
         }
         .background(Theme.bgBase)
         .onAppear { vocabulary = vocabularyStore.current }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            vocabulary = vocabularyStore.current
+        }
     }
 
     // MARK: - Filtered data

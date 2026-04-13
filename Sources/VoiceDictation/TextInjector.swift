@@ -13,22 +13,31 @@ final class TextInjector {
         let appResult = AXUIElementCopyAttributeValue(
             systemWide, kAXFocusedApplicationAttribute as CFString, &focusedApp
         )
-        guard appResult == .success, let app = focusedApp else {
+        guard appResult == .success, let focusedAppObj = focusedApp else {
             return false
         }
+        // Validate the returned object is actually an AXUIElement
+        guard CFGetTypeID(focusedAppObj) == AXUIElementGetTypeID() else {
+            return false
+        }
+        let app = focusedAppObj as! AXUIElement
 
         var focusedElement: AnyObject?
         let elemResult = AXUIElementCopyAttributeValue(
-            app as! AXUIElement, kAXFocusedUIElementAttribute as CFString, &focusedElement
+            app, kAXFocusedUIElementAttribute as CFString, &focusedElement
         )
-        guard elemResult == .success, let element = focusedElement else {
+        guard elemResult == .success, let focusedElemObj = focusedElement else {
             return false
         }
+        guard CFGetTypeID(focusedElemObj) == AXUIElementGetTypeID() else {
+            return false
+        }
+        let element = focusedElemObj as! AXUIElement
 
         // Check if the focused element has a value attribute (text field indicator)
         var role: AnyObject?
         AXUIElementCopyAttributeValue(
-            element as! AXUIElement, kAXRoleAttribute as CFString, &role
+            element, kAXRoleAttribute as CFString, &role
         )
         if let roleStr = role as? String {
             let textRoles = [
@@ -44,26 +53,26 @@ final class TextInjector {
     /// Returns true if text was pasted into a text field, false if only copied to clipboard.
     @discardableResult
     static func inject(_ text: String) -> Bool {
-        let pasteboard = NSPasteboard.general
-
-        // Save current clipboard content
-        let oldTypes = pasteboard.types
-        var oldItems: [(NSPasteboard.PasteboardType, Data)] = []
-        if let types = oldTypes {
-            for type in types {
-                if let data = pasteboard.data(forType: type) {
-                    oldItems.append((type, data))
-                }
-            }
-        }
-
-        // Write our text to clipboard
-        pasteboard.clearContents()
-        pasteboard.setString(text, forType: .string)
-
+        // Check focus BEFORE touching clipboard to avoid losing content
         let hasFocus = hasFocusedTextField()
 
         if hasFocus {
+            let pasteboard = NSPasteboard.general
+
+            // Save current clipboard content
+            let oldTypes = pasteboard.types
+            var oldItems: [(NSPasteboard.PasteboardType, Data)] = []
+            if let types = oldTypes {
+                for type in types {
+                    if let data = pasteboard.data(forType: type) {
+                        oldItems.append((type, data))
+                    }
+                }
+            }
+
+            // Write our text to clipboard
+            pasteboard.clearContents()
+            pasteboard.setString(text, forType: .string)
             // Simulate Cmd+V
             simulatePaste()
 
@@ -73,7 +82,10 @@ final class TextInjector {
             }
             return true
         } else {
-            // No text field focused — leave text in clipboard, send notification
+            // No text field focused — copy text to clipboard, send notification
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setString(text, forType: .string)
             sendNotification(
                 title: "Voice Dictation",
                 body: "已复制到剪贴板"
@@ -104,13 +116,17 @@ final class TextInjector {
     }
 
     private static func sendNotification(title: String, body: String) {
-        // Use NSUserNotification for simplicity (deprecated but works without entitlements)
-        // In a production app, use UNUserNotificationCenter
+        let escapedBody = body
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        let escapedTitle = title
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
         task.arguments = [
             "-e",
-            "display notification \"\(body)\" with title \"\(title)\"",
+            "display notification \"\(escapedBody)\" with title \"\(escapedTitle)\"",
         ]
         try? task.run()
     }

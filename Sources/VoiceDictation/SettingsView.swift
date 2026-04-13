@@ -5,6 +5,8 @@ struct SettingsView: View {
     @State private var apiKeyDisplay = ""
     @State private var isEditingApiKey = false
     @State private var editedApiKey = ""
+    @State private var saveError: String?
+    @State private var showSaveError = false
 
     var body: some View {
         ScrollView {
@@ -125,6 +127,11 @@ struct SettingsView: View {
         }
         .background(Theme.bgBase)
         .onAppear { loadApiKeyDisplay() }
+        .alert("保存失败", isPresented: $showSaveError) {
+            Button("确定", role: .cancel) {}
+        } message: {
+            Text(saveError ?? "未知错误")
+        }
     }
 
     // MARK: - Section builder
@@ -204,12 +211,16 @@ struct SettingsView: View {
         }
 
         let content = lines.joined(separator: "\n") + "\n"
-        try? FileManager.default.createDirectory(at: envDir, withIntermediateDirectories: true)
-        try? content.write(to: envFile, atomically: true, encoding: .utf8)
-
-        isEditingApiKey = false
-        loadApiKeyDisplay()
-
-        print("[Settings] API key updated")
+        do {
+            try FileManager.default.createDirectory(at: envDir, withIntermediateDirectories: true)
+            try content.write(to: envFile, atomically: true, encoding: .utf8)
+            isEditingApiKey = false
+            loadApiKeyDisplay()
+            print("[Settings] API key updated")
+        } catch {
+            saveError = error.localizedDescription
+            showSaveError = true
+            print("[Settings] Failed to save API key: \(error)")
+        }
     }
 }

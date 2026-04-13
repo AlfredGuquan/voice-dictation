@@ -65,15 +65,16 @@ final class HotkeyManager {
             if let tap = eventTap {
                 CGEvent.tapEnable(tap: tap, enable: true)
             }
-            return Unmanaged.passRetained(event)
+            return Unmanaged.passUnretained(event)
         }
 
         let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
 
         // Right Option key (keyCode 61)
         if type == .flagsChanged && keyCode == 61 {
-            let flags = event.flags
-            if flags.contains(.maskAlternate) {
+            let modifierFlags: CGEventFlags = [.maskCommand, .maskShift, .maskAlternate, .maskControl]
+            let pressedModifiers = event.flags.intersection(modifierFlags)
+            if pressedModifiers == .maskAlternate {
                 // Key down
                 if !isRightOptionDown {
                     isRightOptionDown = true
@@ -98,6 +99,6 @@ final class HotkeyManager {
             return nil
         }
 
-        return Unmanaged.passRetained(event)
+        return Unmanaged.passUnretained(event)
     }
 }

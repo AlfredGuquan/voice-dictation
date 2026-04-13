@@ -7,9 +7,10 @@ final class FloatingPillPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 
     /// Create a pill-shaped floating panel positioned at screen bottom center.
-    static func create(width: CGFloat = 280, height: CGFloat = 48) -> FloatingPillPanel {
+    /// Returns nil if no screen is available.
+    static func create(width: CGFloat = 280, height: CGFloat = 48) -> FloatingPillPanel? {
         guard let screen = NSScreen.main else {
-            fatalError("No main screen available")
+            return nil
         }
 
         let screenFrame = screen.visibleFrame
