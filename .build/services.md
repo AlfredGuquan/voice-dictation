@@ -26,3 +26,10 @@
 - NSPasteboard: Clipboard read/write for text injection
 - CGEvent: Keyboard simulation (Cmd+V paste)
 - osascript: System notifications (display notification)
+- DispatchSource.makeFileSystemObjectSource: File watching for vocabulary auto-reload
+
+## Local File Storage
+- `~/.voice-dictation/vocabulary.json`: Personal vocabulary (recognition words + replacement mappings)
+  - Created automatically with defaults on first run
+  - Watched for changes via DispatchSource; auto-reloads without app restart
+  - Format: `{"recognitionWords": [...], "replacements": {"trigger": "replacement"}}`

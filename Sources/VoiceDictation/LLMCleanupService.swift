@@ -24,7 +24,7 @@ final class LLMCleanupService {
         }
     }
 
-    private let systemPrompt = """
+    private let baseSystemPrompt = """
         你是语音转录的文字清洗助手。你的任务是清理语音识别的原始文本，使其更加可读。
 
         规则：
@@ -41,17 +41,38 @@ final class LLMCleanupService {
         输出：我觉得这个 feature 需要一个 API 来处理
         """
 
-    /// Clean up raw transcription text.
-    func cleanup(rawText: String) async throws -> String {
+    /// Build full system prompt, optionally injecting vocabulary instructions.
+    func buildSystemPrompt(vocabulary: VocabularyStore.Vocabulary? = nil) -> String {
+        var prompt = baseSystemPrompt
+
+        guard let vocab = vocabulary else { return prompt }
+
+        if !vocab.recognitionWords.isEmpty {
+            let words = vocab.recognitionWords.joined(separator: "、")
+            prompt += "\n\n以下专有名词必须保持原样：\(words)"
+        }
+
+        if !vocab.replacements.isEmpty {
+            let lines = vocab.replacements.map { "\($0.key) → \($0.value)" }
+            prompt += "\n\n以下词语需要替换：\(lines.joined(separator: "、"))"
+        }
+
+        return prompt
+    }
+
+    /// Clean up raw transcription text, optionally applying personal vocabulary.
+    func cleanup(rawText: String, vocabulary: VocabularyStore.Vocabulary? = nil) async throws -> String {
         if rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return ""
         }
+
+        let prompt = buildSystemPrompt(vocabulary: vocabulary)
 
         let requestBody: [String: Any] = [
             "model": "gpt-4o-mini",
             "temperature": 0.3,
             "messages": [
-                ["role": "system", "content": systemPrompt],
+                ["role": "system", "content": prompt],
                 ["role": "user", "content": rawText],
             ],
         ]

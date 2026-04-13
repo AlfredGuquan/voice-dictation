@@ -15,6 +15,7 @@ final class DictationPipeline {
 
     private let hotkeyManager = HotkeyManager()
     private let audioRecorder = AudioRecorder()
+    private let vocabularyStore = VocabularyStore()
     private var whisperService: WhisperService?
     private var cleanupService: LLMCleanupService?
 
@@ -37,6 +38,9 @@ final class DictationPipeline {
 
         whisperService = WhisperService(apiKey: apiKey)
         cleanupService = LLMCleanupService(apiKey: apiKey)
+
+        // Load personal vocabulary (creates default file if needed)
+        vocabularyStore.load()
 
         // Setup hotkey
         hotkeyManager.onEvent = { [weak self] event in
@@ -148,9 +152,12 @@ final class DictationPipeline {
                 return
             }
 
-            // Step 2: Cleanup
+            // Step 2: Cleanup (with personal vocabulary)
             print("[Pipeline] Cleaning up...")
-            let cleanedText = try await cleanup.cleanup(rawText: rawText)
+            let cleanedText = try await cleanup.cleanup(
+                rawText: rawText,
+                vocabulary: self.vocabularyStore.current
+            )
 
             if cleanedText.isEmpty {
                 await MainActor.run {

@@ -48,8 +48,20 @@
 - Walk up 3 levels from executable path to find project root `.env`
 - Fallback: `~/.voice-dictation/.env`
 
+### Personal Vocabulary (VocabularyStore)
+- File: `~/.voice-dictation/vocabulary.json` — JSON with `recognitionWords` array and `replacements` dict
+- `VocabularyStore.load()` creates dir + default file if missing, then starts DispatchSource file watcher
+- File watcher handles atomic writes (delete+rename) by restarting the watcher after 200ms delay
+- Vocabulary injected into LLM cleanup via `LLMCleanupService.buildSystemPrompt(vocabulary:)`
+- `cleanup(rawText:vocabulary:)` has default nil parameter — backward compatible, existing callers unaffected
+- Recognition words appended as "以下专有名词必须保持原样：{words}" to system prompt
+- Replacements appended as "以下词语需要替换：{trigger} → {replacement}" to system prompt
+- VocabularyStore also exposes `recognitionWordsPrompt()` / `replacementsPrompt()` for future UI use
+
 ## Gotchas
 - SPM's `.build/` directory conflicts with knowledge files at `.build/*.md` — use gitignore negation pattern `!.build/*.md`
 - `NSPanel.hidesOnDeactivate` must be explicitly set to `false` — default hides panel when app loses activation (which is always for `.accessory` apps)
 - `CGEvent.tapCreate` returns nil without Accessibility permission — check at startup
 - AVAudioEngine input format varies by hardware — always use `inputNode.outputFormat(forBus:)` as source of truth
+- SPM executable targets cannot be `@testable import`ed — use standalone Swift scripts for unit-style testing
+- DispatchSource file watcher: atomic writes (via `.atomic` option) trigger delete+rename events, not write — must handle both and restart the watcher on the new inode
