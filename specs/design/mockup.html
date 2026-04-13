@@ -1,0 +1,1676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice Dictation - Design Mockup v0.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ============================================
+     CSS VARIABLES -- Warm Anthropic Palette
+     ============================================ */
+  :root {
+    /* Backgrounds */
+    --bg-deep:      #F5F0E8;
+    --bg-base:      #FAF7F2;
+    --bg-surface:   #F0EBE3;
+    --bg-card:      #FFFFFF;
+    --bg-card-hover:#FBF9F6;
+    --bg-pill:      rgba(30, 28, 24, 0.88);
+    --bg-pill-warm: rgba(255, 253, 250, 0.82);
+    --bg-input:     #FFFFFF;
+    --bg-sidebar:   #F0EBE3;
+
+    /* Text */
+    --text-primary:   #1A1A1A;
+    --text-secondary: #6B6560;
+    --text-tertiary:  #9C958C;
+    --text-accent:    #C4653A;
+
+    /* Accent — Anthropic terracotta / warm coral */
+    --accent:         #D97757;
+    --accent-hover:   #C4653A;
+    --accent-glow:    rgba(217, 119, 87, 0.12);
+    --accent-subtle:  rgba(217, 119, 87, 0.07);
+
+    /* Semantic */
+    --confirm:        #5D8C5A;
+    --confirm-bg:     rgba(93, 140, 90, 0.10);
+    --confirm-text:   #3D6B3A;
+    --cancel:         #C4653A;
+    --cancel-bg:      rgba(196, 101, 58, 0.08);
+    --diff-removed:   rgba(196, 101, 58, 0.10);
+    --diff-added:     rgba(93, 140, 90, 0.12);
+
+    /* Borders */
+    --border:         #E8E0D4;
+    --border-focus:   rgba(217, 119, 87, 0.4);
+
+    /* Radius */
+    --radius-sm:   6px;
+    --radius-md:   10px;
+    --radius-lg:   16px;
+    --radius-xl:   24px;
+    --radius-pill: 999px;
+
+    /* Shadows */
+    --shadow-card:  0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03);
+    --shadow-pill:  0 4px 24px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+    --shadow-pill-warm: 0 4px 24px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+    --shadow-window:0 8px 40px rgba(0,0,0,0.08), 0 0 0 1px var(--border);
+
+    /* Typography */
+    --font-sans:  'DM Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    --font-mono:  'DM Mono', 'SF Mono', 'Fira Code', monospace;
+
+    /* Spacing */
+    --space-xs:  4px;
+    --space-sm:  8px;
+    --space-md:  16px;
+    --space-lg:  24px;
+    --space-xl:  32px;
+    --space-2xl: 48px;
+  }
+
+  /* ============================================
+     RESET & BASE
+     ============================================ */
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Subtle warm texture on body */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(217, 119, 87, 0.03) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(196, 101, 58, 0.02) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ============================================
+     PAGE LAYOUT
+     ============================================ */
+  .page-header {
+    text-align: center;
+    padding: 80px 40px 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .page-header::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 500px;
+    height: 300px;
+    background: radial-gradient(ellipse at center, rgba(217, 119, 87, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .page-header h1 {
+    font-size: 44px;
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    position: relative;
+  }
+
+  .page-header p {
+    font-size: 16px;
+    color: var(--text-secondary);
+    max-width: 620px;
+    margin: 0 auto;
+    line-height: 1.8;
+  }
+
+  .page-header .badge {
+    display: inline-block;
+    padding: 5px 16px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-subtle);
+    color: var(--text-accent);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(217, 119, 87, 0.15);
+  }
+
+  /* Section container */
+  .section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 40px;
+    border-top: 1px solid var(--border);
+    position: relative;
+    z-index: 1;
+  }
+
+  .section-header {
+    margin-bottom: 40px;
+  }
+
+  .section-number {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-accent);
+    margin-bottom: 8px;
+    font-family: var(--font-mono);
+  }
+
+  .section-title {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.8px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+
+  .section-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    max-width: 680px;
+  }
+
+  /* Variant row */
+  .variants {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .variant {
+    flex: 1;
+    min-width: 340px;
+  }
+
+  .variant-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 16px;
+    font-family: var(--font-mono);
+  }
+
+  /* Design note */
+  .design-note {
+    margin-top: 32px;
+    padding: 16px 20px;
+    background: var(--accent-subtle);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  .design-note strong {
+    color: var(--text-accent);
+    font-weight: 600;
+  }
+
+
+  /* ============================================
+     SECTION 1 -- FLOATING PILL (standalone)
+     ============================================ */
+  .pill-showcase {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 80px;
+    flex-wrap: wrap;
+    padding: 60px 0;
+  }
+
+  .pill-demo {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  /* The actual pill -- standalone, no desktop sim */
+  .floating-pill {
+    position: relative;
+    width: 280px;
+    height: 48px;
+    border-radius: var(--radius-pill);
+    background: var(--bg-pill);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: var(--shadow-pill);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 6px;
+  }
+
+  .floating-pill.warm-glass {
+    background: var(--bg-pill-warm);
+    box-shadow: var(--shadow-pill-warm);
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+
+  /* Pill buttons */
+  .pill-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .pill-btn.cancel {
+    background: var(--cancel-bg);
+    color: var(--cancel);
+  }
+
+  .pill-btn.confirm {
+    background: var(--confirm-bg);
+    color: var(--confirm);
+  }
+
+  /* Dark pill overrides for button colors */
+  .floating-pill:not(.warm-glass) .pill-btn.cancel {
+    background: rgba(248, 113, 113, 0.15);
+    color: #f87171;
+  }
+
+  .floating-pill:not(.warm-glass) .pill-btn.confirm {
+    background: rgba(52, 211, 153, 0.15);
+    color: #34d399;
+  }
+
+  .pill-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Waveform animation */
+  .waveform {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    flex: 1;
+    height: 100%;
+    padding: 0 12px;
+  }
+
+  .waveform .bar {
+    width: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+    animation: waveform-bounce 1.2s ease-in-out infinite;
+    opacity: 0.8;
+  }
+
+  .floating-pill:not(.warm-glass) .waveform .bar {
+    background: #818cf8;
+  }
+
+  .waveform .bar:nth-child(1)  { height: 8px;  animation-delay: 0s; }
+  .waveform .bar:nth-child(2)  { height: 14px; animation-delay: 0.1s; }
+  .waveform .bar:nth-child(3)  { height: 20px; animation-delay: 0.15s; }
+  .waveform .bar:nth-child(4)  { height: 28px; animation-delay: 0.2s; }
+  .waveform .bar:nth-child(5)  { height: 22px; animation-delay: 0.25s; }
+  .waveform .bar:nth-child(6)  { height: 32px; animation-delay: 0.3s; }
+  .waveform .bar:nth-child(7)  { height: 18px; animation-delay: 0.35s; }
+  .waveform .bar:nth-child(8)  { height: 26px; animation-delay: 0.4s; }
+  .waveform .bar:nth-child(9)  { height: 14px; animation-delay: 0.45s; }
+  .waveform .bar:nth-child(10) { height: 20px; animation-delay: 0.5s; }
+  .waveform .bar:nth-child(11) { height: 10px; animation-delay: 0.55s; }
+  .waveform .bar:nth-child(12) { height: 16px; animation-delay: 0.6s; }
+
+  @keyframes waveform-bounce {
+    0%, 100% { transform: scaleY(0.4); opacity: 0.5; }
+    50%      { transform: scaleY(1);   opacity: 0.9; }
+  }
+
+  /* Recording label below pill */
+  .pill-status {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    font-family: var(--font-mono);
+    letter-spacing: 0.5px;
+    text-align: center;
+  }
+
+  /* Progress bar for processing state */
+  .progress-area {
+    flex: 1;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .progress-label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.3px;
+  }
+
+  .floating-pill.warm-glass .progress-label {
+    color: var(--text-secondary);
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .floating-pill.warm-glass .progress-track {
+    background: rgba(0,0,0,0.06);
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+    animation: progress-sweep 2s ease-in-out infinite;
+  }
+
+  .floating-pill:not(.warm-glass) .progress-fill {
+    background: linear-gradient(90deg, #6366f1, #818cf8);
+  }
+
+  @keyframes progress-sweep {
+    0%   { width: 0%; opacity: 0.6; }
+    50%  { width: 70%; opacity: 1; }
+    100% { width: 100%; opacity: 0.6; }
+  }
+
+  /* Processing spinner on confirm button */
+  .pill-btn.processing {
+    background: rgba(99, 102, 241, 0.15);
+    color: #818cf8;
+    position: relative;
+  }
+
+  .floating-pill.warm-glass .pill-btn.processing {
+    background: var(--accent-subtle);
+    color: var(--accent);
+  }
+
+  .pill-btn.processing .spinner-ring {
+    position: absolute;
+    inset: 2px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+
+  /* ============================================
+     SECTION 2 -- MAIN WINDOW (Sidebar layout)
+     ============================================ */
+  .window-frame {
+    width: 100%;
+    max-width: 850px;
+    border-radius: var(--radius-lg);
+    background: var(--bg-base);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-window);
+    overflow: hidden;
+  }
+
+  .window-frame.wide {
+    max-width: 900px;
+  }
+
+  /* Traffic lights */
+  .titlebar {
+    height: 46px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+    position: relative;
+  }
+
+  .traffic-lights {
+    display: flex;
+    gap: 6px;
+  }
+
+  .traffic-light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+
+  .traffic-light.red    { background: #ff5f57; }
+  .traffic-light.yellow { background: #febc2e; }
+  .traffic-light.green  { background: #28c840; }
+
+  .titlebar-text {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 13px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+  }
+
+  /* Sidebar layout */
+  .window-body {
+    display: flex;
+    min-height: 460px;
+  }
+
+  .sidebar {
+    width: 180px;
+    border-right: 1px solid var(--border);
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: var(--bg-sidebar);
+    flex-shrink: 0;
+  }
+
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .sidebar-item:hover {
+    background: rgba(0,0,0,0.04);
+    color: var(--text-primary);
+  }
+
+  .sidebar-item.active {
+    background: var(--accent-subtle);
+    color: var(--text-accent);
+  }
+
+  .sidebar-item svg {
+    width: 16px;
+    height: 16px;
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+
+  .sidebar-item.active svg {
+    opacity: 1;
+  }
+
+  .sidebar-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 4px;
+  }
+
+  /* Main content area */
+  .content {
+    flex: 1;
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    overflow: hidden;
+  }
+
+  /* Search bar */
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--bg-input);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    transition: border-color 0.15s;
+  }
+
+  .search-bar:hover {
+    border-color: #D5CCC0;
+  }
+
+  .search-bar svg {
+    width: 14px;
+    height: 14px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+  }
+
+  .search-bar span {
+    font-size: 13px;
+    color: var(--text-tertiary);
+  }
+
+  .search-bar .shortcut {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    background: var(--bg-surface);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    border: 1px solid var(--border);
+  }
+
+  /* History cards */
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .history-card {
+    padding: 16px;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .history-card:hover {
+    background: var(--bg-card-hover);
+    border-color: #D5CCC0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  }
+
+  .history-card .text {
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.6;
+    margin-bottom: 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .history-card .meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .history-card .meta-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  .history-card .meta-left span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .history-card .meta-left svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .copy-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+  }
+
+  .copy-btn:hover {
+    background: var(--accent-subtle);
+    color: var(--text-accent);
+    border-color: var(--border-focus);
+  }
+
+  .copy-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+
+  /* ============================================
+     SECTION 3 -- COMPARISON VIEW
+     ============================================ */
+  .comparison-view {
+    display: flex;
+    gap: 1px;
+    background: var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-top: 8px;
+  }
+
+  .comparison-col {
+    flex: 1;
+    background: var(--bg-card);
+    padding: 20px;
+  }
+
+  .comparison-col-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .comparison-col-header .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .comparison-col-header .dot.raw     { background: var(--text-tertiary); }
+  .comparison-col-header .dot.cleaned { background: var(--confirm); }
+
+  .comparison-col-header span {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+  }
+
+  .comparison-text {
+    font-size: 15px;
+    line-height: 2;
+    color: var(--text-primary);
+  }
+
+  .filler {
+    color: var(--cancel);
+    text-decoration: line-through;
+    background: var(--diff-removed);
+    padding: 1px 4px;
+    border-radius: 3px;
+    opacity: 0.85;
+  }
+
+  .duplicate {
+    color: var(--cancel);
+    text-decoration: line-through;
+    background: var(--diff-removed);
+    padding: 1px 4px;
+    border-radius: 3px;
+    opacity: 0.85;
+  }
+
+  .cleaned-highlight {
+    background: var(--diff-added);
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+
+  /* Back button in detail view */
+  .back-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px 0;
+    transition: color 0.15s;
+  }
+
+  .back-btn:hover { color: var(--text-accent); }
+
+  .back-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .detail-title {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+
+  .detail-meta {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  /* Stats bar between columns */
+  .comparison-stats {
+    display: flex;
+    gap: 20px;
+    padding: 12px 16px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-md);
+    margin-top: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+  }
+
+  .stat-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .stat-value.accent { color: var(--text-accent); }
+  .stat-value.green  { color: var(--confirm); }
+
+  /* ============================================
+     SECTION 4 -- VOCABULARY SETTINGS
+     ============================================ */
+  .vocab-section {
+    margin-top: 8px;
+  }
+
+  .vocab-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+  }
+
+  .vocab-tab {
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+  }
+
+  .vocab-tab:hover {
+    background: rgba(0,0,0,0.03);
+  }
+
+  .vocab-tab.active {
+    background: var(--accent-subtle);
+    color: var(--text-accent);
+    border-color: rgba(217, 119, 87, 0.18);
+  }
+
+  .vocab-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .vocab-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+  }
+
+  .vocab-item:hover {
+    background: var(--bg-card-hover);
+    border-color: #D5CCC0;
+  }
+
+  .vocab-word {
+    font-size: 14px;
+    color: var(--text-primary);
+    flex: 1;
+  }
+
+  .vocab-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .vocab-item:hover .vocab-actions {
+    opacity: 1;
+  }
+
+  .vocab-action-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .vocab-action-btn:hover {
+    background: rgba(0,0,0,0.04);
+    color: var(--text-secondary);
+  }
+
+  .vocab-action-btn.delete:hover {
+    background: var(--cancel-bg);
+    color: var(--cancel);
+  }
+
+  .vocab-action-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* Mapping items */
+  .mapping-item {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0;
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: all 0.15s;
+  }
+
+  .mapping-item:hover {
+    background: var(--bg-card-hover);
+    border-color: #D5CCC0;
+  }
+
+  .mapping-trigger, .mapping-result {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  .mapping-trigger {
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+
+  .mapping-arrow {
+    color: var(--text-tertiary);
+    padding: 0 8px;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .mapping-result {
+    color: var(--text-primary);
+  }
+
+  .mapping-actions {
+    display: flex;
+    gap: 4px;
+    padding-right: 8px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .mapping-item:hover .mapping-actions {
+    opacity: 1;
+  }
+
+  /* Add button */
+  .add-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    border: 1px dashed #D5CCC0;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 4px;
+  }
+
+  .add-row:hover {
+    border-color: var(--border-focus);
+    color: var(--text-accent);
+    background: var(--accent-subtle);
+  }
+
+  .add-row svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* ============================================
+     UTILITIES
+     ============================================ */
+  .flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .text-mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .variants { flex-direction: column; align-items: center; }
+    .variant { min-width: auto; width: 100%; max-width: 600px; }
+    .pill-showcase { flex-direction: column; gap: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========================================
+     PAGE HEADER
+     ======================================== -->
+<div class="page-header">
+  <div class="badge">DESIGN MOCKUP v0.2</div>
+  <h1>Voice Dictation</h1>
+  <p>macOS 语音听写工具的界面设计预览。暖色极简风格，参考 Anthropic 的视觉语言。以下为各屏幕的静态 mockup。</p>
+</div>
+
+
+<!-- ========================================
+     SECTION 1 -- FLOATING PILL
+     ======================================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-number">01</div>
+    <div class="section-title">Floating Pill</div>
+    <div class="section-desc">录音时在屏幕底部居中显示的浮动控件。左取消、中间状态指示、右确认。录音和处理两种状态各展示两种视觉方案（深色 vs 暖色毛玻璃）供选择。</div>
+  </div>
+
+  <div class="pill-showcase">
+    <!-- Recording: Dark pill -->
+    <div class="pill-demo">
+      <div class="variant-label">Recording / Dark</div>
+      <div class="floating-pill">
+        <button class="pill-btn cancel">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>
+        </button>
+        <div class="waveform">
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        </div>
+        <button class="pill-btn confirm">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3.5 8.5 6.5 11.5 12.5 4.5"/></svg>
+        </button>
+      </div>
+      <div class="pill-status">0:03 recording</div>
+    </div>
+
+    <!-- Recording: Warm frosted glass -->
+    <div class="pill-demo">
+      <div class="variant-label">Recording / Warm Glass</div>
+      <div class="floating-pill warm-glass">
+        <button class="pill-btn cancel">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>
+        </button>
+        <div class="waveform">
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        </div>
+        <button class="pill-btn confirm">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3.5 8.5 6.5 11.5 12.5 4.5"/></svg>
+        </button>
+      </div>
+      <div class="pill-status">0:03 recording</div>
+    </div>
+  </div>
+
+  <div class="pill-showcase" style="padding-top: 20px;">
+    <!-- Processing: Dark pill -->
+    <div class="pill-demo">
+      <div class="variant-label">Processing / Dark</div>
+      <div class="floating-pill">
+        <button class="pill-btn cancel">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>
+        </button>
+        <div class="progress-area">
+          <div class="progress-label">Processing...</div>
+          <div class="progress-track">
+            <div class="progress-fill"></div>
+          </div>
+        </div>
+        <button class="pill-btn processing">
+          <div class="spinner-ring"></div>
+        </button>
+      </div>
+      <div class="pill-status">transcribing</div>
+    </div>
+
+    <!-- Processing: Warm frosted glass -->
+    <div class="pill-demo">
+      <div class="variant-label">Processing / Warm Glass</div>
+      <div class="floating-pill warm-glass">
+        <button class="pill-btn cancel">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>
+        </button>
+        <div class="progress-area">
+          <div class="progress-label">Processing...</div>
+          <div class="progress-track">
+            <div class="progress-fill"></div>
+          </div>
+        </div>
+        <button class="pill-btn processing">
+          <div class="spinner-ring"></div>
+        </button>
+      </div>
+      <div class="pill-status">transcribing</div>
+    </div>
+  </div>
+
+  <div class="design-note">
+    <strong>Design rationale:</strong> Pill 展示为独立浮动组件（无桌面背景模拟），因为它实际上 overlay 在用户任何 app 之上。提供两种视觉方案供选择：<br>
+    <strong>Dark</strong> — 深色半透明，对比度高，在任何浅色/深色桌面上都清晰可辨。<br>
+    <strong>Warm Glass</strong> — 暖色毛玻璃，与 Anthropic 暖色主题统一，更柔和优雅，但在浅色背景上对比度稍低。<br>
+    280x48px 尺寸确认。波形和进度条动画保留。
+  </div>
+</div>
+
+
+<!-- ========================================
+     SECTION 2 -- MAIN WINDOW (History)
+     ======================================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-number">02</div>
+    <div class="section-title">Main Window - History List</div>
+    <div class="section-desc">主窗口展示听写历史记录。侧边栏导航布局，宽度 ~850px，每屏可见 3-4 条记录。</div>
+  </div>
+
+  <div class="variants" style="justify-content: center;">
+    <div class="variant" style="max-width: 900px; min-width: auto;">
+      <div class="variant-label">Sidebar Navigation</div>
+      <div class="window-frame">
+        <div class="titlebar">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <div class="titlebar-text">Voice Dictation</div>
+        </div>
+        <div class="window-body">
+          <div class="sidebar">
+            <div class="sidebar-item active">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2"/></svg>
+              <span>历史</span>
+            </div>
+            <div class="sidebar-item">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M5 7h6M5 10h4"/></svg>
+              <span>词库</span>
+            </div>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-item">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></svg>
+              <span>设置</span>
+            </div>
+          </div>
+          <div class="content">
+            <div class="search-bar">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></svg>
+              <span>搜索历史...</span>
+              <span class="shortcut">&#8984;F</span>
+            </div>
+            <div class="history-list">
+              <div class="history-card">
+                <div class="text">我觉得这个 Claude Code 的功能还是挺好的，特别是代码补全和重构方面的表现超出预期。</div>
+                <div class="meta">
+                  <div class="meta-left">
+                    <span>
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></svg>
+                      今天 14:32
+                    </span>
+                    <span>
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h12M8 2v12"/></svg>
+                      12秒
+                    </span>
+                  </div>
+                  <button class="copy-btn">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="5" width="8" height="8" rx="1.5"/><path d="M3 11V3.5A1.5 1.5 0 0 1 4.5 2H11"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="history-card">
+                <div class="text">明天下午三点开会讨论新版本的发布计划，需要准备产品路线图和技术方案文档。</div>
+                <div class="meta">
+                  <div class="meta-left">
+                    <span>
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></svg>
+                      今天 11:15
+                    </span>
+                    <span>
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h12M8 2v12"/></svg>
+                      8秒
+                    </span>
+                  </div>
+                  <button class="copy-btn">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="5" width="8" height="8" rx="1.5"/><path d="M3 11V3.5A1.5 1.5 0 0 1 4.5 2H11"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="history-card">
+                <div class="text">帮我查一下上周五提交的那个 Pull Request 的状态，看看有没有 reviewer 的反馈。</div>
+                <div class="meta">
+                  <div class="meta-left">
+                    <span>
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></svg>
+                      昨天 17:42
+                    </span>
+                    <span>
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h12M8 2v12"/></svg>
+                      6秒
+                    </span>
+                  </div>
+                  <button class="copy-btn">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="5" width="8" height="8" rx="1.5"/><path d="M3 11V3.5A1.5 1.5 0 0 1 4.5 2H11"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="history-card">
+                <div class="text">周末去超市买点菜，需要西红柿、鸡蛋、青椒还有豆腐。</div>
+                <div class="meta">
+                  <div class="meta-left">
+                    <span>
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></svg>
+                      昨天 09:20
+                    </span>
+                    <span>
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h12M8 2v12"/></svg>
+                      4秒
+                    </span>
+                  </div>
+                  <button class="copy-btn">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="5" width="8" height="8" rx="1.5"/><path d="M3 11V3.5A1.5 1.5 0 0 1 4.5 2H11"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="design-note">
+    <strong>Design rationale:</strong> 侧边栏导航保留，接近 macOS 原生应用的导航模式（系统偏好设置、Finder），图标辅助识别，功能扩展不受限。窗口宽度增至 ~850px，给内容区更充裕的横向空间。暖色色板：off-white 背景 + 白色卡片 + 暖灰边框 + terracotta 强调色，整体感觉温暖、精致。
+  </div>
+</div>
+
+
+<!-- ========================================
+     SECTION 3 -- COMPARISON VIEW
+     ======================================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-number">03</div>
+    <div class="section-title">Comparison View</div>
+    <div class="section-desc">点击某条历史记录后进入详情，左右对比原始转录与清洗后的文本。口头禅和重复内容在左侧用暖色标注。</div>
+  </div>
+
+  <div class="variants" style="justify-content: center;">
+    <div class="variant" style="max-width: 900px; min-width: auto;">
+      <div class="variant-label">Detail View</div>
+      <div class="window-frame wide">
+        <div class="titlebar">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <div class="titlebar-text">Voice Dictation</div>
+        </div>
+        <div class="window-body">
+          <div class="sidebar">
+            <div class="sidebar-item active">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2"/></svg>
+              <span>历史</span>
+            </div>
+            <div class="sidebar-item">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M5 7h6M5 10h4"/></svg>
+              <span>词库</span>
+            </div>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-item">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></svg>
+              <span>设置</span>
+            </div>
+          </div>
+          <div class="content">
+            <div class="back-row">
+              <div class="back-btn">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3L5 8l5 5"/></svg>
+                返回列表
+              </div>
+            </div>
+            <div class="detail-meta">
+              <span>今天 14:32</span>
+              <span>时长 12秒</span>
+              <span>字数 42 → 28</span>
+            </div>
+            <div class="comparison-view">
+              <div class="comparison-col">
+                <div class="comparison-col-header">
+                  <div class="dot raw"></div>
+                  <span>原始转录</span>
+                </div>
+                <div class="comparison-text">
+                  <span class="filler">嗯，</span><span class="filler">就是说，</span>我觉得这个 Claude Code 的<span class="filler">，嗯，</span>功能还是<span class="duplicate">挺好的，挺好的</span>，<span class="filler">就是</span>特别是代码补全和<span class="filler">那个</span>重构方面的表现<span class="filler">，怎么说呢，</span>超出预期。
+                </div>
+              </div>
+              <div class="comparison-col">
+                <div class="comparison-col-header">
+                  <div class="dot cleaned"></div>
+                  <span>清洗后</span>
+                </div>
+                <div class="comparison-text">
+                  <span class="cleaned-highlight">我觉得这个 Claude Code 的功能还是挺好的，特别是代码补全和重构方面的表现超出预期。</span>
+                </div>
+              </div>
+            </div>
+            <div class="comparison-stats">
+              <div class="stat">
+                <div class="stat-label">移除口头禅</div>
+                <div class="stat-value accent">6</div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">移除重复</div>
+                <div class="stat-value accent">1</div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">压缩率</div>
+                <div class="stat-value green">33%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="design-note">
+    <strong>Design rationale:</strong> 对比视图使用侧边栏导航（与主窗口一致），内容区左右双栏。口头禅和重复用暖色 coral/terracotta 标注（替代之前的冷红色），清洗后文本用暖色绿标识。底部统计栏提供量化反馈。返回按钮使用 macOS 标准的左箭头 + 文字模式。
+  </div>
+</div>
+
+
+<!-- ========================================
+     SECTION 4 -- VOCABULARY SETTINGS
+     ======================================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-number">04</div>
+    <div class="section-title">Vocabulary Settings</div>
+    <div class="section-desc">个人词库管理界面。包含两个子功能：识别词（确保语音识别准确输出特定词汇）和替换映射（口语缩写自动展开为完整形式）。</div>
+  </div>
+
+  <div class="variants" style="justify-content: center;">
+    <div class="variant" style="max-width: 850px; min-width: auto;">
+      <div class="variant-label">Recognition Words</div>
+      <div class="window-frame">
+        <div class="titlebar">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <div class="titlebar-text">Voice Dictation</div>
+        </div>
+        <div class="window-body">
+          <div class="sidebar">
+            <div class="sidebar-item">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2"/></svg>
+              <span>历史</span>
+            </div>
+            <div class="sidebar-item active">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M5 7h6M5 10h4"/></svg>
+              <span>词库</span>
+            </div>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-item">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></svg>
+              <span>设置</span>
+            </div>
+          </div>
+          <div class="content">
+            <div class="search-bar">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></svg>
+              <span>搜索词库...</span>
+            </div>
+
+            <div class="vocab-section">
+              <div class="vocab-tabs">
+                <div class="vocab-tab active">识别词</div>
+                <div class="vocab-tab">替换映射</div>
+              </div>
+
+              <!-- Recognition Words -->
+              <div class="vocab-list" id="recognition-list">
+                <div class="vocab-item">
+                  <div class="vocab-word">顾权</div>
+                  <div class="vocab-actions">
+                    <button class="vocab-action-btn">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11.5 2.5l2 2M5 9l-1 3 3-1 7-7-2-2-7 7z"/></svg>
+                    </button>
+                    <button class="vocab-action-btn delete">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="4" x2="13" y2="4"/><path d="M6 4V2.5h4V4"/><path d="M4 4l.7 9.2a1 1 0 001 .8h4.6a1 1 0 001-.8L12 4"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="vocab-item">
+                  <div class="vocab-word">Claude Code</div>
+                  <div class="vocab-actions">
+                    <button class="vocab-action-btn">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11.5 2.5l2 2M5 9l-1 3 3-1 7-7-2-2-7 7z"/></svg>
+                    </button>
+                    <button class="vocab-action-btn delete">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="4" x2="13" y2="4"/><path d="M6 4V2.5h4V4"/><path d="M4 4l.7 9.2a1 1 0 001 .8h4.6a1 1 0 001-.8L12 4"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="vocab-item">
+                  <div class="vocab-word">Anthropic</div>
+                  <div class="vocab-actions">
+                    <button class="vocab-action-btn">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11.5 2.5l2 2M5 9l-1 3 3-1 7-7-2-2-7 7z"/></svg>
+                    </button>
+                    <button class="vocab-action-btn delete">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="4" x2="13" y2="4"/><path d="M6 4V2.5h4V4"/><path d="M4 4l.7 9.2a1 1 0 001 .8h4.6a1 1 0 001-.8L12 4"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="vocab-item">
+                  <div class="vocab-word">Whisper</div>
+                  <div class="vocab-actions">
+                    <button class="vocab-action-btn">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11.5 2.5l2 2M5 9l-1 3 3-1 7-7-2-2-7 7z"/></svg>
+                    </button>
+                    <button class="vocab-action-btn delete">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="4" x2="13" y2="4"/><path d="M6 4V2.5h4V4"/><path d="M4 4l.7 9.2a1 1 0 001 .8h4.6a1 1 0 001-.8L12 4"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="vocab-item">
+                  <div class="vocab-word">macOS</div>
+                  <div class="vocab-actions">
+                    <button class="vocab-action-btn">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11.5 2.5l2 2M5 9l-1 3 3-1 7-7-2-2-7 7z"/></svg>
+                    </button>
+                    <button class="vocab-action-btn delete">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="4" x2="13" y2="4"/><path d="M6 4V2.5h4V4"/><path d="M4 4l.7 9.2a1 1 0 001 .8h4.6a1 1 0 001-.8L12 4"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="add-row">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>
+                  添加识别词
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="variant" style="max-width: 850px; min-width: auto;">
+      <div class="variant-label">Replacement Mappings</div>
+      <div class="window-frame">
+        <div class="titlebar">
+          <div class="traffic-lights">
+            <div class="traffic-light red"></div>
+            <div class="traffic-light yellow"></div>
+            <div class="traffic-light green"></div>
+          </div>
+          <div class="titlebar-text">Voice Dictation</div>
+        </div>
+        <div class="window-body">
+          <div class="sidebar">
+            <div class="sidebar-item">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2"/></svg>
+              <span>历史</span>
+            </div>
+            <div class="sidebar-item active">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M5 7h6M5 10h4"/></svg>
+              <span>词库</span>
+            </div>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-item">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></svg>
+              <span>设置</span>
+            </div>
+          </div>
+          <div class="content">
+            <div class="search-bar">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></svg>
+              <span>搜索映射...</span>
+            </div>
+
+            <div class="vocab-section">
+              <div class="vocab-tabs">
+                <div class="vocab-tab">识别词</div>
+                <div class="vocab-tab active">替换映射</div>
+              </div>
+
+              <!-- Replacement Mappings -->
+              <div class="vocab-list">
+                <div class="mapping-item">
+                  <div class="mapping-trigger">CC</div>
+                  <div class="mapping-arrow">&#8594;</div>
+                  <div class="mapping-result">Claude Code</div>
+                  <div class="mapping-actions">
+                    <button class="vocab-action-btn">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11.5 2.5l2 2M5 9l-1 3 3-1 7-7-2-2-7 7z"/></svg>
+                    </button>
+                    <button class="vocab-action-btn delete">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="4" x2="13" y2="4"/><path d="M6 4V2.5h4V4"/><path d="M4 4l.7 9.2a1 1 0 001 .8h4.6a1 1 0 001-.8L12 4"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="mapping-item">
+                  <div class="mapping-trigger">PR</div>
+                  <div class="mapping-arrow">&#8594;</div>
+                  <div class="mapping-result">Pull Request</div>
+                  <div class="mapping-actions">
+                    <button class="vocab-action-btn">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11.5 2.5l2 2M5 9l-1 3 3-1 7-7-2-2-7 7z"/></svg>
+                    </button>
+                    <button class="vocab-action-btn delete">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="4" x2="13" y2="4"/><path d="M6 4V2.5h4V4"/><path d="M4 4l.7 9.2a1 1 0 001 .8h4.6a1 1 0 001-.8L12 4"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="mapping-item">
+                  <div class="mapping-trigger">那个A P I</div>
+                  <div class="mapping-arrow">&#8594;</div>
+                  <div class="mapping-result">API</div>
+                  <div class="mapping-actions">
+                    <button class="vocab-action-btn">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11.5 2.5l2 2M5 9l-1 3 3-1 7-7-2-2-7 7z"/></svg>
+                    </button>
+                    <button class="vocab-action-btn delete">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="4" x2="13" y2="4"/><path d="M6 4V2.5h4V4"/><path d="M4 4l.7 9.2a1 1 0 001 .8h4.6a1 1 0 001-.8L12 4"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="mapping-item">
+                  <div class="mapping-trigger">顾全</div>
+                  <div class="mapping-arrow">&#8594;</div>
+                  <div class="mapping-result">顾权</div>
+                  <div class="mapping-actions">
+                    <button class="vocab-action-btn">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11.5 2.5l2 2M5 9l-1 3 3-1 7-7-2-2-7 7z"/></svg>
+                    </button>
+                    <button class="vocab-action-btn delete">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="4" x2="13" y2="4"/><path d="M6 4V2.5h4V4"/><path d="M4 4l.7 9.2a1 1 0 001 .8h4.6a1 1 0 001-.8L12 4"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="add-row">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>
+                  添加替换映射
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="design-note">
+    <strong>Design rationale:</strong> 词库管理同样使用侧边栏导航，保持全局导航一致性。pill-shaped 子标签在"识别词"和"替换映射"之间切换。识别词列表简洁——只显示词条和 hover 时的编辑/删除操作。替换映射使用三栏布局（触发词 -> 箭头 -> 替换结果），触发词用等宽字体区分。底部虚线 + 按钮提供添加入口。暖色调下，白色卡片在 off-white 背景上形成微妙层次。
+  </div>
+</div>
+
+
+<!-- ========================================
+     COLOR PALETTE REFERENCE
+     ======================================== -->
+<div class="section" style="border-bottom: 1px solid var(--border);">
+  <div class="section-header">
+    <div class="section-number">REF</div>
+    <div class="section-title">Color System</div>
+    <div class="section-desc">Anthropic-inspired 暖色色板。所有颜色通过 CSS 变量定义，方便全局调整。</div>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px;">
+    <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+      <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--bg-deep); border: 1px solid var(--border);"></div>
+      <span style="font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono);">bg-deep</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+      <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--bg-base); border: 1px solid var(--border);"></div>
+      <span style="font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono);">bg-base</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+      <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border);"></div>
+      <span style="font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono);">bg-surface</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+      <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border);"></div>
+      <span style="font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono);">bg-card</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+      <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--bg-sidebar); border: 1px solid var(--border);"></div>
+      <span style="font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono);">sidebar</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+      <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--accent); border: 1px solid var(--border);"></div>
+      <span style="font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono);">accent</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+      <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--accent-hover); border: 1px solid var(--border);"></div>
+      <span style="font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono);">accent-2</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+      <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--confirm); border: 1px solid var(--border);"></div>
+      <span style="font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono);">confirm</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+      <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--cancel); border: 1px solid var(--border);"></div>
+      <span style="font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono);">cancel</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+      <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--text-primary); border: 1px solid var(--border);"></div>
+      <span style="font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono);">text-1</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+      <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--text-secondary); border: 1px solid var(--border);"></div>
+      <span style="font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono);">text-2</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+      <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--text-tertiary); border: 1px solid var(--border);"></div>
+      <span style="font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono);">text-3</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
