@@ -1,0 +1,30 @@
+metadata:
+  feature: "f1-dictation-pipeline"
+  description: "核心听写管道：热键 toggle → 录音 → ASR → 清洗 → 焦点注入"
+  generated_at: "2026-04-13T00:00:00+08:00"
+
+stories:
+  - name: "基本听写流程"
+    acceptance_criteria:
+      - "按热键开始录音，再按结束，清洗后文字出现在当前焦点输入框光标处"
+
+  - name: "中英混合识别"
+    acceptance_criteria:
+      - "中文语句中夹杂英文词能正确识别"
+      - "填充词（嗯、啊、哦）和重复词被去除，原意保留"
+
+  - name: "取消录音"
+    acceptance_criteria:
+      - "Esc 键取消录音，不产生任何文字输出"
+
+  - name: "撤销注入"
+    acceptance_criteria:
+      - "Cmd+Z 能撤销刚注入的文字"
+
+  - name: "无焦点输入框回退"
+    acceptance_criteria:
+      - "焦点不在输入框时，文字复制到剪贴板并弹出系统通知"
+
+  - name: "网络失败处理"
+    acceptance_criteria:
+      - "网络失败时弹出通知，音频保留在历史中可重试"

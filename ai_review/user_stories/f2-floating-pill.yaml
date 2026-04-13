@@ -1,0 +1,19 @@
+metadata:
+  feature: "f2-floating-pill"
+  description: "浮动药丸 UI：录音时波形动画 → 处理时进度条 → 完成后消失"
+  generated_at: "2026-04-13T00:00:00+08:00"
+
+stories:
+  - name: "药丸出现与波形"
+    acceptance_criteria:
+      - "按热键后药丸从底部浮出，显示波形动画"
+      - "说话时波形有动态响应"
+
+  - name: "取消操作"
+    acceptance_criteria:
+      - "点击 ✕ 或按 Esc 取消录音，药丸消失"
+
+  - name: "处理状态"
+    acceptance_criteria:
+      - "点击 ✓ 或再按热键，波形变为进度条"
+      - "处理完成后药丸自动消失"

@@ -1,0 +1,21 @@
+metadata:
+  feature: "f3-vocabulary"
+  description: "个人词库：识别词 + 替换映射，文件存储 + UI 管理"
+  generated_at: "2026-04-13T00:00:00+08:00"
+
+stories:
+  - name: "识别词生效"
+    acceptance_criteria:
+      - "在 UI 中添加识别词后，听写时该词能被正确识别"
+
+  - name: "替换映射生效"
+    acceptance_criteria:
+      - "在 UI 中添加替换映射后，听写中说出触发词，输出为替换后的文字"
+
+  - name: "文件直接编辑"
+    acceptance_criteria:
+      - "直接编辑词库文件后，应用能识别变更并生效"
+
+  - name: "词库管理"
+    acceptance_criteria:
+      - "在 UI 中能浏览、搜索、编辑、删除词库条目"

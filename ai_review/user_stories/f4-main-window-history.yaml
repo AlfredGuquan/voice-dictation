@@ -1,0 +1,29 @@
+metadata:
+  feature: "f4-main-window-history"
+  description: "主窗口与历史记录：菜单栏常驻 + 历史浏览/搜索/对比"
+  generated_at: "2026-04-13T00:00:00+08:00"
+
+stories:
+  - name: "菜单栏与主窗口"
+    acceptance_criteria:
+      - "点击菜单栏图标能打开主窗口"
+
+  - name: "历史记录自动更新"
+    acceptance_criteria:
+      - "每次听写完成后，历史列表自动出现新记录"
+
+  - name: "历史搜索"
+    acceptance_criteria:
+      - "搜索框输入关键词能过滤匹配的历史记录"
+
+  - name: "复制历史内容"
+    acceptance_criteria:
+      - "点击某条记录能看到清洗后文字，可一键复制"
+
+  - name: "原始/清洗对比"
+    acceptance_criteria:
+      - "切换到对比视图，左右并排显示原始转录和清洗后文字"
+
+  - name: "设置入口"
+    acceptance_criteria:
+      - "设置页面能配置热键和管理词库"
