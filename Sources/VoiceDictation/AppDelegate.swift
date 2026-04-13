@@ -3,10 +3,17 @@ import Cocoa
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let pipeline = DictationPipeline()
     private var statusItem: NSStatusItem?
+    private var mainWindowController: MainWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Menu bar icon
         setupStatusItem()
+
+        // Prepare main window controller (uses pipeline's stores)
+        mainWindowController = MainWindowController(
+            historyStore: pipeline.historyStore,
+            vocabularyStore: pipeline.vocabularyStore
+        )
 
         // Start the dictation pipeline
         pipeline.start()
@@ -29,6 +36,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "Voice Dictation", action: nil, keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
 
+        let openWindowItem = NSMenuItem(
+            title: "打开主窗口",
+            action: #selector(openMainWindow),
+            keyEquivalent: ","
+        )
+        openWindowItem.keyEquivalentModifierMask = [.command]
+        openWindowItem.target = self
+        menu.addItem(openWindowItem)
+
+        menu.addItem(NSMenuItem.separator())
+
         let statusMenuItem = NSMenuItem(
             title: "Press Right Option to dictate",
             action: nil,
@@ -43,5 +61,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
 
         statusItem?.menu = menu
+    }
+
+    @objc private func openMainWindow() {
+        mainWindowController?.toggleWindow()
     }
 }

@@ -58,6 +58,26 @@
 - Replacements appended as "以下词语需要替换：{trigger} → {replacement}" to system prompt
 - VocabularyStore also exposes `recognitionWordsPrompt()` / `replacementsPrompt()` for future UI use
 
+### Main Window (SwiftUI in NSWindow)
+- `MainWindowController` creates an `NSWindow` with `NSHostingView` wrapping SwiftUI `MainContentView`
+- `window.isReleasedWhenClosed = false` — keeps the window object alive so re-opening works without recreating
+- App starts as `.accessory` (no Dock icon) but calls `NSApp.activate(ignoringOtherApps: true)` when opening main window — this brings the window to front
+- Sidebar navigation uses enum `SidebarSection` with `.history`, `.vocabulary`, `.settings`
+- History comparison view is reached by setting `selectedRecordID` (not a separate NavigationLink), back button clears it
+
+### HistoryStore
+- `HistoryStore` is `ObservableObject` with `@Published records` for SwiftUI reactivity
+- Uses `Combine` import (not SwiftUI) to get `ObservableObject` and `@Published` without pulling in SwiftUI framework in the data layer
+- Records added to pipeline in `processAudio` (success path) and `handleError` (failure path)
+- `DictationPipeline.historyStore` and `.vocabularyStore` are `let` (internal access) so `AppDelegate` can pass them to `MainWindowController`
+- `recordingStartTime` tracked on pipeline to compute duration
+
+### SwiftUI View Patterns
+- `VocabularyView` reads from `VocabularyStore.current` on appear and maintains local `@State` copy
+- After each edit operation, calls `vocabularyStore.save()` which writes to disk; file watcher picks up changes for the pipeline
+- `Theme.swift` centralizes all design tokens (colors) as `Color` static properties
+- `Color(hex:)` extension initializer for hex color values
+
 ## Gotchas
 - SPM's `.build/` directory conflicts with knowledge files at `.build/*.md` — use gitignore negation pattern `!.build/*.md`
 - `NSPanel.hidesOnDeactivate` must be explicitly set to `false` — default hides panel when app loses activation (which is always for `.accessory` apps)
@@ -65,3 +85,6 @@
 - AVAudioEngine input format varies by hardware — always use `inputNode.outputFormat(forBus:)` as source of truth
 - SPM executable targets cannot be `@testable import`ed — use standalone Swift scripts for unit-style testing
 - DispatchSource file watcher: atomic writes (via `.atomic` option) trigger delete+rename events, not write — must handle both and restart the watcher on the new inode
+- `remove(atOffsets: IndexSet)` on arrays is a SwiftUI extension — using it in non-SwiftUI files forces a SwiftUI link dependency. Use manual `removeAll(where:)` instead for data-layer code
+- SwiftUI views imported in SPM executable compile fine — no special linker settings needed beyond the existing AppKit/AVFoundation/CoreGraphics. SwiftUI is auto-linked when imported
+- `NSApp.activate(ignoringOtherApps: true)` is needed to bring `.accessory` app windows to front — without it, the window appears behind other apps

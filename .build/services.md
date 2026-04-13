@@ -33,3 +33,10 @@
   - Created automatically with defaults on first run
   - Watched for changes via DispatchSource; auto-reloads without app restart
   - Format: `{"recognitionWords": [...], "replacements": {"trigger": "replacement"}}`
+- `~/.voice-dictation/history.json`: Dictation history records
+  - Created on first dictation completion
+  - Format: JSON array of records with `id`, `rawTranscript`, `cleanedText`, `timestamp` (ISO 8601), `duration`, `audioFilePath` (optional), `status` ("success"|"failed")
+  - Records sorted by timestamp descending
+  - Written atomically; read at startup by HistoryStore
+- `~/.voice-dictation/.env`: API keys (OPENAI_API_KEY)
+  - Can be edited from Settings UI; changes require app restart to take effect for pipeline

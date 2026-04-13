@@ -15,7 +15,8 @@ final class DictationPipeline {
 
     private let hotkeyManager = HotkeyManager()
     private let audioRecorder = AudioRecorder()
-    private let vocabularyStore = VocabularyStore()
+    let vocabularyStore = VocabularyStore()
+    let historyStore = HistoryStore()
     private var whisperService: WhisperService?
     private var cleanupService: LLMCleanupService?
 
@@ -24,8 +25,9 @@ final class DictationPipeline {
     private var pillVC: PillViewController?
     private var levelUpdateTimer: Timer?
 
-    // Current recording URL
+    // Current recording URL and start time (for duration)
     private var currentAudioURL: URL?
+    private var recordingStartTime: Date?
 
     func start() {
         // Load API key
@@ -41,6 +43,9 @@ final class DictationPipeline {
 
         // Load personal vocabulary (creates default file if needed)
         vocabularyStore.load()
+
+        // Load history
+        historyStore.load()
 
         // Setup hotkey
         hotkeyManager.onEvent = { [weak self] event in
@@ -95,6 +100,7 @@ final class DictationPipeline {
         do {
             let url = try audioRecorder.startRecording()
             currentAudioURL = url
+            recordingStartTime = Date()
             state = .recording
             hotkeyManager.isActive = true
             showPill(state: .recording)
@@ -170,9 +176,20 @@ final class DictationPipeline {
             }
 
             // Step 3: Inject text
+            let duration = self.recordingStartTime.map { Date().timeIntervalSince($0) } ?? 0
             await MainActor.run {
                 print("[Pipeline] Injecting: \(cleanedText)")
                 TextInjector.inject(cleanedText)
+
+                // Save to history
+                let record = HistoryStore.Record(
+                    rawTranscript: rawText,
+                    cleanedText: cleanedText,
+                    duration: duration,
+                    status: .success
+                )
+                self.historyStore.addRecord(record)
+
                 self.state = .idle
                 hidePill()
             }
@@ -192,8 +209,19 @@ final class DictationPipeline {
         state = .idle
         hidePill()
 
+        let duration = recordingStartTime.map { Date().timeIntervalSince($0) } ?? 0
+
         // Save audio to history for retry
         if let historyURL = audioRecorder.moveToHistory(audioURL) {
+            let record = HistoryStore.Record(
+                rawTranscript: "",
+                cleanedText: "",
+                duration: duration,
+                audioFilePath: historyURL.path,
+                status: .failed
+            )
+            historyStore.addRecord(record)
+
             showNotification(
                 "Voice Dictation Error",
                 body: "\(message)\nAudio saved: \(historyURL.lastPathComponent)"
