@@ -1,0 +1,5 @@
+.env
+.build/
+*.o
+*.swp
+.DS_Store
