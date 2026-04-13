@@ -86,6 +86,33 @@ LLM 清洗，在可靠性和成本之间取得平衡。
 
 ---
 
+## Tracer Findings [2026-04-13]
+
+全部 6 个集成点验证通过。
+
+### 已验证的技术路径
+
+| 集成点 | 方案 | 备注 |
+|--------|------|------|
+| 全局热键 | CGEvent tap + keyCode 61 (右 Option) | 需 Accessibility 权限，启动时检测 |
+| 录音 | AVAudioEngine → WAV (48kHz Int16 PCM) | Whisper API 直接接受 |
+| ASR | OpenAI Whisper API (`whisper-1`, language=zh) | 中文准确，英文大部分正确 |
+| LLM 清洗 | GPT-4o-mini, temperature 0.3 | 去填充词+去重效果好，~¥0.0002/次 |
+| 文字注入 | 剪贴板粘贴法 (保存剪贴板→写入→Cmd+V→恢复) | CGEvent 逐字符对中文有编码问题，不可用 |
+| 浮动药丸 | NSPanel + nonactivatingPanel + canBecomeKey=false + hidesOnDeactivate=false | 不抢焦点，不出现在 Dock |
+
+### 关键约束
+
+- 文字注入必须用剪贴板法，需保存/恢复用户剪贴板内容，注入后延迟 ~200ms 再恢复
+- ASR 对专有名词有系统性错误（如 Claude→Cloud），个人词库在清洗阶段注入修正
+- NSPanel 必须设 hidesOnDeactivate=false，否则因 accessory app 不激活会立刻隐藏
+
+### 验证方式
+
+桌面原生应用，不适合 browser-qa。QA 采用 AppleScript 自动化（模拟热键 + 检查 TextEdit 内容）+ 人工验证药丸 UI。
+
+---
+
 ## Scope 外
 
 - 流式注入（说话过程中逐步出现文字）
