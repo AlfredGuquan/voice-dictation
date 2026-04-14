@@ -49,3 +49,35 @@
   left edge when you animate `frame.size.width`.
 - Monotonic invariant: clamp each phase's target to `max(currentRatio, target)` so
   re-entry or races never shrink the fill.
+
+## Accessory app + Cmd+, global shortcut (F7)
+- `NSApp.setActivationPolicy(.accessory)` apps that only set `statusItem.menu`
+  cannot receive `keyEquivalent` presses when the main window is frontmost — the
+  status-item menu only processes keyEquivalents while popped open.
+- Fix: build a separate `NSApp.mainMenu` with an Application menu whose first
+  submenu contains the `Preferences... ⌘,` item. macOS then routes the
+  shortcut through the responder chain to that menu item regardless of which
+  app window is key.
+- Drop the duplicate `keyEquivalent: ","` on any status-item items; with the
+  mainMenu owning the shortcut, status-item duplicates are dead code.
+
+## SwiftUI @State hoisting for menu-driven tab switches (F7)
+- `@State` inside a SwiftUI view can't be mutated from AppKit (AppDelegate / NSMenu
+  action). Introduce a small `ObservableObject` (`@Published` tab enum), hold it
+  on the `NSWindowController`, pass it as `@ObservedObject` into the SwiftUI
+  root, and let the AppKit action mutate it.
+- Swap `@State` → `@ObservedObject` in the view; the sidebar button taps still
+  write through (`navigation.selectedSection = ...`) because `@Published`
+  re-renders on write.
+
+## Hot-reloaded config — don't cache the API key (F10)
+- Services that need values that can change at runtime (API keys, provider
+  config) must NOT store them as instance state. Read through a `Config` enum
+  that re-parses `.env` every call.
+- Cost: one ~100-byte file read per HTTPS request; negligible next to the
+  network round-trip.
+- Benefit: no notification plumbing, no cache-coherence bugs. Settings writes
+  `~/.voice-dictation/.env`; the next request sees the new value.
+- Throw `missingAPIKey` (or similar) when `Config.apiKey == nil` so the normal
+  error path in the pipeline (pill failure + system notification) surfaces the
+  problem; don't crash.
