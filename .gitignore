@@ -8,3 +8,6 @@
 **/.build/
 !.build/*.md
 !**/.build/*.md
+
+# QA screenshots — stay local, may contain desktop/environment context
+screenshots/
