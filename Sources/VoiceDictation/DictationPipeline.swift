@@ -17,8 +17,8 @@ final class DictationPipeline {
     private let audioRecorder = AudioRecorder()
     let vocabularyStore = VocabularyStore()
     let historyStore = HistoryStore()
-    private var whisperService: WhisperService?
-    private var cleanupService: LLMCleanupService?
+    private let whisperService = WhisperService()
+    private let cleanupService = LLMCleanupService()
 
     // UI
     private var pillPanel: FloatingPillPanel?
@@ -30,16 +30,16 @@ final class DictationPipeline {
     private var recordingStartTime: Date?
 
     func start() {
-        // Load API key
-        let env = EnvLoader.load()
-        guard let apiKey = env["OPENAI_API_KEY"], !apiKey.isEmpty else {
-            print("[Pipeline] ERROR: OPENAI_API_KEY not found in .env")
-            showNotification("Voice Dictation Error", body: "OPENAI_API_KEY not found. Create .env file.")
-            return
+        // Startup sanity check: warn the user if no key is configured yet.
+        // Services read Config.apiKey on every request, so Settings updates
+        // take effect without a restart.
+        if Config.apiKey == nil {
+            print("[Pipeline] WARNING: OPENAI_API_KEY not set; configure it in Settings")
+            showNotification(
+                "Voice Dictation",
+                body: "OPENAI_API_KEY not set. Open Settings to configure."
+            )
         }
-
-        whisperService = WhisperService(apiKey: apiKey)
-        cleanupService = LLMCleanupService(apiKey: apiKey)
 
         // Load personal vocabulary (creates default file if needed)
         vocabularyStore.load()
@@ -136,15 +136,10 @@ final class DictationPipeline {
     // MARK: - Processing pipeline
 
     private func processAudio(url: URL) async {
-        guard let whisper = whisperService, let cleanup = cleanupService else {
-            await MainActor.run { handleError("Services not initialized", audioURL: url) }
-            return
-        }
-
         do {
             // Step 1: Transcribe
             print("[Pipeline] Transcribing...")
-            let transcription = try await whisper.transcribe(fileURL: url)
+            let transcription = try await whisperService.transcribe(fileURL: url)
             let rawText = transcription.text
 
             if rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -160,7 +155,7 @@ final class DictationPipeline {
 
             // Step 2: Cleanup (with personal vocabulary)
             print("[Pipeline] Cleaning up...")
-            let cleanedText = try await cleanup.cleanup(
+            let cleanedText = try await cleanupService.cleanup(
                 rawText: rawText,
                 vocabulary: self.vocabularyStore.current
             )

@@ -2,12 +2,7 @@ import Foundation
 
 /// Calls OpenAI Whisper API for speech-to-text transcription.
 final class WhisperService {
-    private let apiKey: String
     private let endpoint = URL(string: "https://api.openai.com/v1/audio/transcriptions")!
-
-    init(apiKey: String) {
-        self.apiKey = apiKey
-    }
 
     struct TranscriptionResult {
         let text: String
@@ -17,18 +12,24 @@ final class WhisperService {
         case networkError(String)
         case apiError(String)
         case invalidResponse
+        case missingAPIKey
 
         var errorDescription: String? {
             switch self {
             case .networkError(let msg): return "Network error: \(msg)"
             case .apiError(let msg): return "API error: \(msg)"
             case .invalidResponse: return "Invalid response from Whisper API"
+            case .missingAPIKey: return "OPENAI_API_KEY not set"
             }
         }
     }
 
     /// Transcribe audio file using Whisper API.
     func transcribe(fileURL: URL) async throws -> TranscriptionResult {
+        guard let apiKey = Config.apiKey else {
+            throw WhisperError.missingAPIKey
+        }
+
         let boundary = UUID().uuidString
 
         var request = URLRequest(url: endpoint)
