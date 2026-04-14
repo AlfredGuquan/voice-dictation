@@ -22,8 +22,9 @@ enum Theme {
     static let confirm      = Color(hex: 0x5D8C5A)
     static let cancel       = Color(hex: 0xC4653A)
 
-    static let diffRemoved  = Color(hex: 0xC4653A).opacity(0.10)
-    static let diffAdded    = Color(hex: 0x5D8C5A).opacity(0.12)
+    static let diffRemoved     = Color(hex: 0xC4653A).opacity(0.18)
+    static let diffRemovedText = Color(hex: 0xC4653A)
+    static let diffAdded       = Color(hex: 0x5D8C5A).opacity(0.12)
 }
 
 // MARK: - Color hex initializer
