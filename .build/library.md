@@ -70,6 +70,33 @@
   write through (`navigation.selectedSection = ...`) because `@Published`
   re-renders on write.
 
+## In-app toast NSPanel config (F5)
+- Same floating-panel recipe as the pill works for top-right toasts:
+  `nonactivatingPanel + borderless + level=.floating + hidesOnDeactivate=false +
+  collectionBehavior=[.canJoinAllSpaces, .fullScreenAuxiliary] + backgroundColor=.clear +
+  hasShadow=false`.
+- `ignoresMouseEvents = true` for info toasts keeps them purely visual — they
+  don't block clicks in the app underneath. Error toasts keep mouse events
+  enabled so hover can pause the dismiss timer.
+- Screen coords: `NSScreen.visibleFrame` is bottom-origin. Top-right anchoring:
+  `y = visible.maxY - topInset - height - index * (height + spacing)`.
+- Stack eviction: compare `active.count >= maxStack` before creating the new
+  panel; dismiss oldest synchronously (no animation) so frame slots free up.
+- AttributedString in SwiftUI does NOT let you set `strikethroughColor` at
+  per-run level (missing from the Attribute scope) — drop it and let the
+  foreground color carry through; set `foregroundColor` + `strikethroughStyle`.
+
+## Word-level diff in ComparisonView (F8)
+- Don't use Apple `NLTokenizer(.word)` for Chinese — unstable word boundaries
+  (e.g. "对对对" splits to ["对","对对"]) wreck LCS matching.
+- Hand-rolled Unicode scalar scan: CJK per-char + Latin/Digit run, skip
+  whitespace/punct (they become `unchanged` gaps). ~80 lines no deps.
+- After LCS, merge adjacent same-kind segments so multi-word deletions render
+  as one visual block instead of shredded individual characters.
+- Standalone swift test scripts (`Tests/test_differ.swift`) can't `import` the
+  app module. Embed a copy of the algorithm in the test file and note the
+  mirroring requirement in a comment.
+
 ## Hot-reloaded config — don't cache the API key (F10)
 - Services that need values that can change at runtime (API keys, provider
   config) must NOT store them as instance state. Read through a `Config` enum

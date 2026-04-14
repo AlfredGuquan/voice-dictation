@@ -108,7 +108,10 @@ final class DictationPipeline {
             print("[Pipeline] Recording started")
         } catch {
             print("[Pipeline] Failed to start recording: \(error)")
-            showNotification("Voice Dictation Error", body: "Failed to start recording: \(error.localizedDescription)")
+            ToastManager.shared.show(
+                .error,
+                message: "Failed to start recording: \(error.localizedDescription)"
+            )
         }
     }
 
@@ -220,12 +223,12 @@ final class DictationPipeline {
             )
             historyStore.addRecord(record)
 
-            showNotification(
-                "Voice Dictation Error",
-                body: "\(message)\nAudio saved: \(historyURL.lastPathComponent)"
+            ToastManager.shared.show(
+                .error,
+                message: "\(message) · Audio saved: \(historyURL.lastPathComponent)"
             )
         } else {
-            showNotification("Voice Dictation Error", body: message)
+            ToastManager.shared.show(.error, message: message)
         }
     }
 
