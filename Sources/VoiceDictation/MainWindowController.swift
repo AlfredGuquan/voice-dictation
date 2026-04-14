@@ -7,6 +7,7 @@ final class MainWindowController {
     private var window: NSWindow?
     private let historyStore: HistoryStore
     private let vocabularyStore: VocabularyStore
+    private let navigation = MainNavigationState()
 
     init(historyStore: HistoryStore, vocabularyStore: VocabularyStore) {
         self.historyStore = historyStore
@@ -33,12 +34,20 @@ final class MainWindowController {
         NSApp.activate(ignoringOtherApps: true)
     }
 
+    /// Show the main window and select the Settings tab.
+    /// Bound to the Application menu's Preferences... item (Cmd+,).
+    func showSettings() {
+        navigation.selectedSection = .settings
+        showWindow()
+    }
+
     // MARK: - Private
 
     private func createWindow() {
         let contentView = MainContentView(
             historyStore: historyStore,
-            vocabularyStore: vocabularyStore
+            vocabularyStore: vocabularyStore,
+            navigation: navigation
         )
 
         let hostingView = NSHostingView(rootView: contentView)
