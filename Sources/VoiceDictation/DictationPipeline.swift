@@ -13,7 +13,7 @@ final class DictationPipeline {
 
     private(set) var state: State = .idle
 
-    private let hotkeyManager = HotkeyManager()
+    let hotkeyManager = HotkeyManager(hotkey: Config.hotkey)
     private let audioRecorder = AudioRecorder()
     let vocabularyStore = VocabularyStore()
     let historyStore = HistoryStore()
@@ -47,11 +47,18 @@ final class DictationPipeline {
         // Load history
         historyStore.load()
 
-        // Setup hotkey
+        // Setup hotkey — dispatch per event kind (see HotkeyManager.HotkeyEvent)
         hotkeyManager.onEvent = { [weak self] event in
             guard let self = self else { return }
             switch event {
-            case .toggleRecording:
+            case .singleModifierDown:
+                // "Hold to talk" — start on press
+                if self.state == .idle { self.startRecording() }
+            case .singleModifierUp:
+                // "Hold to talk" — stop on release
+                if self.state == .recording { self.stopAndProcess() }
+            case .comboPress:
+                // "Press to toggle"
                 self.handleToggle()
             case .cancel:
                 self.handleCancel()
@@ -66,7 +73,26 @@ final class DictationPipeline {
             )
         }
 
-        print("[Pipeline] Ready. Press Right Option to start/stop dictation.")
+        // Hot reload: Settings posts .hotkeyConfigChanged after writing new hotkey.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(hotkeyConfigDidChange),
+            name: .hotkeyConfigChanged,
+            object: nil
+        )
+
+        print("[Pipeline] Ready. Press \(hotkeyManager.currentHotkey.displayName) to dictate.")
+    }
+
+    @objc private func hotkeyConfigDidChange() {
+        // Called on main thread via NotificationCenter from SettingsView save.
+        // If recording is in flight, cancel it first — the user's old binding
+        // is about to disappear and their "held" state would never receive a
+        // matching release event.
+        if state == .recording {
+            handleCancel()
+        }
+        hotkeyManager.reload(to: Config.hotkey)
     }
 
     // MARK: - Event handlers

@@ -147,3 +147,63 @@
   multiplication/division sign 0x00D7/0x00F7). Narrower ranges shred "café",
   "résumé", "naïve" at the accented scalar, producing misaligned runs the LCS
   can't match end-to-end.
+
+## Dual-mode HotkeyManager + hot reload (F9)
+- Single `CGEvent.tapCreate` with `mask = (1<<flagsChanged)|(1<<keyDown)`
+  covers BOTH "hold-to-talk" (single modifier) and "press-to-toggle" (chord).
+  No need to recreate the tap when switching modes — just atomically swap the
+  `currentHotkey: HotkeyType` field, the callback reads it each event.
+- `reload(to:)` MUST reset `isModifierDown = false` before overwriting
+  `currentHotkey`. Otherwise the old mode's "key held down" residue leaks
+  into the new mode (e.g. switching from right-Option to Fn mid-hold would
+  leave isModifierDown=true and the first Fn tap would emit UP instead of DOWN).
+- Esc (keyCode 53) cancel path is shared across both modes, gated only by
+  `isActive` (pipeline sets this true during recording). Esc outside
+  recording passes through unmolested.
+- Pipeline must observe `Notification.Name.hotkeyConfigChanged` and call
+  `reload(to: Config.hotkey)` + proactively `handleCancel()` if recording
+  is in flight at the moment of switch (the old binding's release event
+  will never arrive).
+
+## Single-modifier keycodes that lack a CGEventFlags bit
+- CapsLock (57) and Fn (63) generate `flagsChanged` events but do NOT
+  set any bit in the `[.maskCommand, .maskShift, .maskAlternate, .maskControl]`
+  mask. `intersection(mask) == []` is true for both press AND release — can't
+  disambiguate from the mask alone.
+- Workaround: track `isModifierDown` internally and flip on each flagsChanged
+  for that keyCode. Works because those keys emit one flagsChanged per
+  physical state change. Non-Fn/CapsLock lone-modifier keys still use the
+  `pressed == own-flag` check.
+
+## Conflict detection for user-configurable hotkeys: static blocklist only
+- `Carbon.RegisterEventHotKey` only sees the current process's registrations.
+  It returns `noErr` for system-reserved keys (Cmd+Space/Spotlight,
+  Cmd+Tab/switcher, Cmd+Shift+5/screencap) — verified false-positive on macOS
+  14. There is no public API to query system-wide hotkeys or third-party
+  (Alfred/Raycast/Hammerspoon) bindings.
+- The only workable design: static `knownConflicts` array hardcoding the
+  ~10 most common system-reserved combos, exposed via
+  `HotkeyManager.conflictDescription(for:)` for SettingsView to show an
+  inline warning. Follow spec "只提示不拦截" — still allow save.
+
+## NSEvent.addLocalMonitorForEvents for hotkey recording
+- Use `.local` monitor (fires only while app is key) to record a new hotkey
+  from the Settings UI. Returning nil from the monitor swallows the event so
+  it doesn't bleed into the form's text fields (e.g. the API-key TextField).
+- `NSEvent.modifierFlags` → `CGEventFlags` needs a manual translation
+  (`.command → .maskCommand`, `.option → .maskAlternate`, etc.) so the same
+  `knownConflicts` list works for both the global tap path and the local
+  recording path.
+- Classifier rule: lone modifier keys (54/55/56/60/58/61/59/62/57/63) with
+  no *other* modifier held → `.singleModifier`. Non-modifier keyDown with
+  at least one modifier held → `.chord`. Reject plain letter keys with no
+  modifiers (captures every keystroke in the form — terrible UX).
+
+## HotkeyType Codable with associated values
+- `enum HotkeyType: Codable` with associated values (`.singleModifier(keyCode:)`
+  and `.chord(keyCode:modifiers:)`) gets automatic Codable conformance in
+  Swift 5.5+ — no custom encoder/decoder needed.
+- Store modifiers as `UInt64` (not `CGEventFlags`), because CGEventFlags
+  isn't Codable. Convert at the edge: `CGEventFlags(rawValue: ...)`.
+- UserDefaults persistence: `JSONEncoder().encode(hotkey)` → Data → setData.
+  Read the other way. 4-line get/set in Config.swift.
