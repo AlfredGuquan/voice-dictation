@@ -13,7 +13,7 @@
 - Cmd+, 打开文本框而非主窗口 -- 菜单栏快捷键映射可能被系统或其他应用拦截，需排查 AppDelegate 的 keyEquivalent 绑定 [2026-04-13 QA]
 - 对比视图缺少 diff 标记 -- mockup 设计了填充词红色删除线高亮，当前实现只做了纯文本并排展示，需要 diff 算法标记被删除的部分 [2026-04-13 QA]
 - 考虑 UI 优化交给 designer agent -- SwiftUI 视觉微调（间距、字体、hover、动画）效率低，评估是否用 designer agent 一次性打磨
-- 热键配置目前只读 -- Settings 页面展示右 Option 但不支持自定义修改
+- 听写快捷键可配置 -- 当前右 Option 硬编码在 HotkeyManager，改为 Settings 页面可自定义快捷键（录制+保存+HotkeyManager 热加载）
 - API Key 修改后需重启 -- Settings 页面保存 API key 后未热加载，应在 UI 标注或实现热加载
 
 ## Completed

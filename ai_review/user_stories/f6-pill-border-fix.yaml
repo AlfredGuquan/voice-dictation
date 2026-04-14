@@ -1,0 +1,28 @@
+metadata:
+  feature: "f6-pill-border-fix"
+  description: "浮动 pill 异常方框虚线边框修复"
+  generated_at: "2026-04-14T00:00:00+08:00"
+  git_ref: "6de0cc7"
+  command: ".build/debug/VoiceDictation"
+  screenshot_dir: "/tmp/voice-v03-qa/f6-pill-border-fix"
+  qa_note: "QA 前关闭主 VoiceDictation 实例避免全局热键冲突 (pkill -f VoiceDictation)"
+
+stories:
+  - name: "浅色模式下 pill 无边框"
+    acceptance_criteria:
+      - "系统切换到浅色模式后按热键显示 pill，pill 外围没有方框虚线或任何额外描边"
+      - "pill 保持原有圆角形状、阴影和内容布局"
+
+  - name: "深色模式下 pill 无边框"
+    acceptance_criteria:
+      - "系统切换到深色模式后按热键显示 pill，pill 外围没有方框虚线或任何额外描边"
+
+  - name: "多屏配置下 pill 无边框"
+    acceptance_criteria:
+      - "接入外接显示器后，在主屏和副屏分别触发 pill，两块屏幕上的 pill 都没有异常边框"
+      - "从外接屏切回内建屏后再次触发，pill 仍无异常边框"
+
+  - name: "pill 配置保持不变"
+    acceptance_criteria:
+      - "修复后 pill 仍不抢焦点（前台 app 不变）"
+      - "accessory app 切出前台时 pill 不被隐藏（hidesOnDeactivate 行为保持）"

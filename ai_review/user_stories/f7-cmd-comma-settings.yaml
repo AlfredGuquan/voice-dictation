@@ -1,0 +1,23 @@
+metadata:
+  feature: "f7-cmd-comma-settings"
+  description: "Cmd+, 打开主窗口 Settings tab，修复错打开文本输入框的 bug"
+  generated_at: "2026-04-14T00:00:00+08:00"
+  git_ref: "6de0cc7"
+  command: ".build/debug/VoiceDictation"
+  screenshot_dir: "/tmp/voice-v03-qa/f7-cmd-comma-settings"
+  qa_note: "QA 前关闭主 VoiceDictation 实例避免全局热键冲突 (pkill -f VoiceDictation)"
+
+stories:
+  - name: "Cmd+, 从菜单栏打开主窗口 Settings"
+    acceptance_criteria:
+      - "主窗口未打开时，按 Cmd+, 或从菜单栏选 Preferences，主窗口弹出并自动激活 Settings tab"
+      - "不弹出独立的文本输入框或对话框"
+
+  - name: "Cmd+, 在主窗口已开时切换到 Settings"
+    acceptance_criteria:
+      - "主窗口已在其它 tab（如历史）时按 Cmd+, ，窗口获得焦点并切换到 Settings tab"
+      - "不打开第二个主窗口"
+
+  - name: "菜单栏 Preferences 项与快捷键行为一致"
+    acceptance_criteria:
+      - "从菜单栏点击 'Preferences...' 与按 Cmd+, 触发相同行为（主窗口 + Settings tab）"

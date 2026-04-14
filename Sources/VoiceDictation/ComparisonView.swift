@@ -64,10 +64,10 @@ struct ComparisonView: View {
                         .foregroundColor(Theme.textSecondary)
 
                     ScrollView {
-                        Text(record.rawTranscript)
+                        Text(diffAttributedString)
                             .font(.system(size: 14))
                             .foregroundColor(Theme.textSecondary)
-                            .lineSpacing(6)
+                            .lineSpacing(8)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .textSelection(.enabled)
                     }
@@ -108,5 +108,27 @@ struct ComparisonView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy年M月d日 HH:mm"
         return formatter.string(from: date)
+    }
+
+    private var diffAttributedString: AttributedString {
+        let segments = Differ.diff(
+            original: record.rawTranscript,
+            cleaned: record.cleanedText
+        )
+        var result = AttributedString()
+        for seg in segments {
+            var piece = AttributedString(seg.text)
+            switch seg.kind {
+            case .unchanged:
+                piece.foregroundColor = Theme.textSecondary
+            case .removed:
+                piece.foregroundColor = Theme.diffRemovedText
+                piece.backgroundColor = Theme.diffRemoved
+                piece.strikethroughStyle = .single
+                piece.font = .system(size: 14, weight: .medium)
+            }
+            result.append(piece)
+        }
+        return result
     }
 }

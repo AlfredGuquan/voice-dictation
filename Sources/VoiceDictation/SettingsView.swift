@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// Settings screen: hotkey config, API key, about.
 struct SettingsView: View {
@@ -19,13 +20,7 @@ struct SettingsView: View {
                                 .font(.system(size: 13))
                                 .foregroundColor(Theme.textPrimary)
                             Spacer()
-                            Text("右 Option")
-                                .font(.system(size: 13, weight: .medium, design: .monospaced))
-                                .foregroundColor(Theme.textSecondary)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 4)
-                                .background(Theme.bgSurface)
-                                .cornerRadius(6)
+                            HotkeyRecorderControl()
                         }
 
                         HStack {
@@ -42,7 +37,7 @@ struct SettingsView: View {
                                 .cornerRadius(6)
                         }
 
-                        Text("快捷键通过全局事件监听实现，无法在此修改")
+                        Text("点击右侧快捷键进入录制模式，录制期间按 Esc 取消。冲突只提示不阻止保存。")
                             .font(.system(size: 11))
                             .foregroundColor(Theme.textTertiary)
                     }
@@ -176,6 +171,8 @@ struct SettingsView: View {
         return env["OPENAI_API_KEY"] ?? ""
     }
 
+    // (HotkeyRecorderControl defined below)
+
     private func saveApiKey() {
         let key = editedApiKey.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !key.isEmpty else {
@@ -222,5 +219,293 @@ struct SettingsView: View {
             showSaveError = true
             print("[Settings] Failed to save API key: \(error)")
         }
+    }
+}
+
+// MARK: - Hotkey recorder control
+//
+// Visual states (v03-brief F9):
+//   idle      — shows current hotkey; click to start recording.
+//   recording — "按下要录制的键…" with pulsing accent border. Esc cancels.
+//   justSaved — confirm-green 1.2s flash after a successful save.
+//
+// Conflict is orthogonal to phase: whenever `conflictHint != nil` the chip
+// wears warn-amber border + background regardless of idle / justSaved. That
+// way the hint persists after the 1.2s flash and follows the hotkey value.
+//
+// Recording classification (Blocker 1):
+//   - Press on a lone modifier key → remember as "pending single-modifier".
+//   - If a keyDown arrives while the modifier is still held → commit chord.
+//   - If the modifier is released without a keyDown → commit single-modifier.
+//   - CapsLock (57) / Fn (63) commit immediately (only one flagsChanged).
+//
+// Save path:
+//   classify NSEvent → HotkeyType  → Config.hotkey = ...
+//   → post .hotkeyConfigChanged   → DictationPipeline.reload
+//
+// Global tap coordination (Blocker 2):
+//   Before starting the local NSEvent monitor we post .hotkeyCaptureBegin
+//   so DictationPipeline tells its CGEventTap to stop swallowing events.
+//   Every exit path (commit / cancel / disappear) posts .hotkeyCaptureEnd.
+private struct HotkeyRecorderControl: View {
+    private enum Phase: Equatable {
+        case idle
+        case recording
+        case justSaved
+    }
+
+    /// Historical default used by Config.hotkey when UserDefaults has no value.
+    private static let defaultHotkey: HotkeyManager.HotkeyType = .singleModifier(keyCode: 61)
+
+    @State private var currentHotkey: HotkeyManager.HotkeyType = Config.hotkey
+    @State private var phase: Phase = .idle
+    @State private var eventMonitor: Any?
+    @State private var conflictHint: String? = nil
+
+    // Recording-session scratch state (Blocker 1 state machine).
+    @State private var pendingModifierKeyCode: Int64? = nil
+    @State private var sawKeyDownDuringHold: Bool = false
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 4) {
+            HStack(spacing: 6) {
+                Button(action: beginRecording) {
+                    Text(chipText)
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundColor(chipForeground)
+                        .frame(minWidth: 140, minHeight: 28 - 2)  // account for border stroke
+                        .padding(.horizontal, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .fill(chipBackground)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .stroke(borderColor, lineWidth: phase == .idle && !hasConflict ? 1 : 1.5)
+                        )
+                }
+                .buttonStyle(.plain)
+                .disabled(phase == .recording)  // clicking again while recording is a no-op
+
+                // Reset to default — shown when the current binding is non-default,
+                // hidden during recording to keep the chip line stable.
+                if phase != .recording && currentHotkey != Self.defaultHotkey {
+                    Button(action: resetToDefault) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 13))
+                            .foregroundColor(Theme.textTertiary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("恢复默认（右 ⌥）")
+                }
+            }
+
+            if let hint = conflictHint {
+                Text(hint)
+                    .font(.system(size: 11))
+                    .foregroundColor(Theme.warn)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 260, alignment: .trailing)
+            }
+        }
+        .onDisappear { endRecording(cancelled: true) }
+    }
+
+    // MARK: - Visual tokens
+
+    private var hasConflict: Bool {
+        conflictHint != nil && phase != .recording
+    }
+
+    private var chipText: String {
+        switch phase {
+        case .idle, .justSaved:
+            return currentHotkey.displayName
+        case .recording:
+            return "按下要录制的键…"
+        }
+    }
+
+    private var chipForeground: Color {
+        switch phase {
+        case .idle:      return hasConflict ? Theme.warn : Theme.textSecondary
+        case .recording: return Theme.accent
+        case .justSaved: return hasConflict ? Theme.warn : Theme.confirm
+        }
+    }
+
+    private var chipBackground: Color {
+        if hasConflict { return Theme.warnBg }
+        switch phase {
+        case .idle:      return Theme.bgSurface
+        case .recording: return Theme.bgSurface
+        case .justSaved: return Theme.confirmBg
+        }
+    }
+
+    private var borderColor: Color {
+        if hasConflict { return Theme.warn }
+        switch phase {
+        case .idle:      return Theme.border
+        case .recording: return Theme.accent
+        case .justSaved: return Theme.confirm
+        }
+    }
+
+    // MARK: - Recording lifecycle
+
+    private func beginRecording() {
+        guard phase != .recording else { return }
+        phase = .recording
+        conflictHint = nil
+        pendingModifierKeyCode = nil
+        sawKeyDownDuringHold = false
+
+        // Tell the global CGEventTap to pass through events (not swallow).
+        // Without this the user's keystroke is consumed at HID level and the
+        // local monitor below never sees it.
+        NotificationCenter.default.post(name: .hotkeyCaptureBegin, object: nil)
+
+        // Monitor both keyDown (chord candidates) and flagsChanged (single
+        // modifier candidates). .local monitors only trigger while the app
+        // window is key, which is exactly what we want — we don't want to
+        // capture system-wide keystrokes here.
+        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .flagsChanged]) { event in
+            handleEvent(event)
+            // Swallow the event so it doesn't bleed into the main window
+            // (e.g. the Settings form's text fields).
+            return nil
+        }
+    }
+
+    private func endRecording(cancelled: Bool) {
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+            eventMonitor = nil
+            // Only post the end notification if we actually had an active
+            // monitor (avoids spurious posts from onDisappear in unstarted state).
+            NotificationCenter.default.post(name: .hotkeyCaptureEnd, object: nil)
+        }
+        pendingModifierKeyCode = nil
+        sawKeyDownDuringHold = false
+        if cancelled {
+            phase = .idle
+        }
+    }
+
+    private func handleEvent(_ event: NSEvent) {
+        // Esc cancels — leaves saved value untouched.
+        if event.type == .keyDown && event.keyCode == 53 {
+            endRecording(cancelled: true)
+            return
+        }
+
+        let keyCode = Int64(event.keyCode)
+        let cgFlags = event.cgFlags
+        let mask: CGEventFlags = [.maskCommand, .maskShift, .maskAlternate, .maskControl]
+        let pressed = cgFlags.intersection(mask)
+
+        if event.type == .flagsChanged {
+            let isKnownLoneModifier = [
+                Int64(54), 55, 56, 60, 58, 61, 59, 62, 57, 63
+            ].contains(keyCode)
+            guard isKnownLoneModifier else { return }
+
+            // CapsLock / Fn — no modifier bit; commit on first flagsChanged.
+            if keyCode == 57 || keyCode == 63 {
+                commit(HotkeyManager.HotkeyType.singleModifier(keyCode: keyCode))
+                return
+            }
+
+            let own = HotkeyManager.modifierFlag(forSingleModifierKeyCode: keyCode)
+            let isLoneModifierPress = (pressed == own && !own.isEmpty)
+            let isAllReleased = pressed.isEmpty
+
+            if isLoneModifierPress && pendingModifierKeyCode == nil {
+                // First modifier key down. Remember it and wait — if a
+                // keyDown arrives before all modifiers are released, we
+                // commit as a chord. Otherwise commit as single-modifier
+                // on release.
+                pendingModifierKeyCode = keyCode
+                sawKeyDownDuringHold = false
+                return
+            }
+
+            if isAllReleased, let pending = pendingModifierKeyCode {
+                // All modifiers released. If no keyDown landed during the
+                // hold, commit the first modifier as a single-modifier
+                // binding; otherwise the chord was already committed and
+                // this is a tail release.
+                let sawKey = sawKeyDownDuringHold
+                pendingModifierKeyCode = nil
+                sawKeyDownDuringHold = false
+                if !sawKey {
+                    commit(HotkeyManager.HotkeyType.singleModifier(keyCode: pending))
+                }
+                return
+            }
+            // Otherwise: a secondary modifier went down or a non-first
+            // modifier went up while others still held. Keep waiting for
+            // either a keyDown (→ chord) or an all-release (→ commit first).
+            return
+        }
+
+        if event.type == .keyDown {
+            // Chord: key + at least one modifier.
+            if !pressed.isEmpty {
+                sawKeyDownDuringHold = true
+                commit(HotkeyManager.HotkeyType.chord(keyCode: keyCode, modifiers: pressed.rawValue))
+                return
+            }
+            // Plain letter key with no modifier — reject. Ignore and keep
+            // the recorder open so the user can press the intended combo.
+            return
+        }
+    }
+
+    private func commit(_ hotkey: HotkeyManager.HotkeyType) {
+        endRecording(cancelled: false)
+        currentHotkey = hotkey
+        Config.hotkey = hotkey
+        conflictHint = HotkeyManager.conflictDescription(for: hotkey).map { name in
+            "此快捷键与 \(name) 冲突 — 本应用将优先响应"
+        }
+        NotificationCenter.default.post(name: .hotkeyConfigChanged, object: nil)
+
+        // Flash "saved" state for 1.2s, then fall back to idle. The conflict
+        // hint (if any) persists independently via `hasConflict`.
+        phase = .justSaved
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            if phase == .justSaved { phase = .idle }
+        }
+    }
+
+    private func resetToDefault() {
+        let defaultHotkey = Self.defaultHotkey
+        guard currentHotkey != defaultHotkey else { return }
+        currentHotkey = defaultHotkey
+        Config.hotkey = defaultHotkey
+        conflictHint = nil
+        NotificationCenter.default.post(name: .hotkeyConfigChanged, object: nil)
+
+        // Brief confirm flash so the reset is acknowledged.
+        phase = .justSaved
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            if phase == .justSaved { phase = .idle }
+        }
+    }
+}
+
+private extension NSEvent {
+    /// Convert NSEvent.modifierFlags → CGEventFlags (raw-value compatible so
+    /// we can share KnownConflict/HotkeyType logic with the global event tap).
+    var cgFlags: CGEventFlags {
+        var out: CGEventFlags = []
+        if modifierFlags.contains(.command)   { out.insert(.maskCommand) }
+        if modifierFlags.contains(.option)    { out.insert(.maskAlternate) }
+        if modifierFlags.contains(.shift)     { out.insert(.maskShift) }
+        if modifierFlags.contains(.control)   { out.insert(.maskControl) }
+        if modifierFlags.contains(.capsLock)  { out.insert(.maskAlphaShift) }
+        return out
     }
 }

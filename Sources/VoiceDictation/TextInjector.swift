@@ -82,14 +82,11 @@ final class TextInjector {
             }
             return true
         } else {
-            // No text field focused — copy text to clipboard, send notification
+            // No text field focused — copy text to clipboard, show in-app toast
             let pasteboard = NSPasteboard.general
             pasteboard.clearContents()
             pasteboard.setString(text, forType: .string)
-            sendNotification(
-                title: "Voice Dictation",
-                body: "已复制到剪贴板"
-            )
+            ToastManager.shared.show(.info, message: "已复制到剪贴板")
             return false
         }
     }
@@ -113,21 +110,5 @@ final class TextInjector {
         for (type, data) in items {
             pasteboard.setData(data, forType: type)
         }
-    }
-
-    private static func sendNotification(title: String, body: String) {
-        let escapedBody = body
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
-        let escapedTitle = title
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        task.arguments = [
-            "-e",
-            "display notification \"\(escapedBody)\" with title \"\(escapedTitle)\"",
-        ]
-        try? task.run()
     }
 }

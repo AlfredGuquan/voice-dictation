@@ -3,23 +3,20 @@ import Foundation
 /// Calls GPT-4o-mini to clean up raw transcription.
 /// Removes filler words, repeated phrases; preserves original meaning.
 final class LLMCleanupService {
-    private let apiKey: String
     private let endpoint = URL(string: "https://api.openai.com/v1/chat/completions")!
-
-    init(apiKey: String) {
-        self.apiKey = apiKey
-    }
 
     enum CleanupError: Error, LocalizedError {
         case networkError(String)
         case apiError(String)
         case invalidResponse
+        case missingAPIKey
 
         var errorDescription: String? {
             switch self {
             case .networkError(let msg): return "Network error: \(msg)"
             case .apiError(let msg): return "API error: \(msg)"
             case .invalidResponse: return "Invalid response from cleanup API"
+            case .missingAPIKey: return "OPENAI_API_KEY not set"
             }
         }
     }
@@ -64,6 +61,10 @@ final class LLMCleanupService {
     func cleanup(rawText: String, vocabulary: VocabularyStore.Vocabulary? = nil) async throws -> String {
         if rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return ""
+        }
+
+        guard let apiKey = Config.apiKey else {
+            throw CleanupError.missingAPIKey
         }
 
         let prompt = buildSystemPrompt(vocabulary: vocabulary)

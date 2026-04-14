@@ -55,3 +55,46 @@ Commit 用 conventional commits。Branch 命名 `feat/xxx`、`fix/xxx`。
 <important if="modifying notification logic">
 - osascript 字符串必须转义引号和反斜杠，防止注入
 </important>
+
+### Learned Constraints
+
+<important if="adding shadows to any NSPanel / layer-backed NSView with rounded corners">
+- 必须设置 `layer.shadowPath = CGPath(roundedRect:cornerWidth:cornerHeight:)` 匹配形状，否则 CA 用 layer.bounds 矩形作 shadow caster，在浅色背景下暴露方框 halo
+- 不要混用 `view.shadow = NSShadow()` 和 CALayer shadow —— 二者不叠加，前者不生效且与 layer shadow 不同步
+- 阴影视觉问题在深色背景下不明显，浅色背景（TextEdit、Finder）下才暴露（见 specs/tracer/v03-findings.md F6）
+</important>
+
+<important if="adding keyboard shortcuts that should work when main window is frontmost">
+- accessory app 必须设置 `NSApp.mainMenu`，statusItem.menu 的 keyEquivalent 只在菜单 popup 时响应
+- 主窗口为前台 + 无 mainMenu 时，按键落到 first responder（NSTextField 等），部分组合键会被输入法或字符面板解释成意外行为
+- 推荐方案：建 Application menu + Preferences... item with `keyEquivalent: ","`（见 specs/tracer/v03-findings.md F7）
+</important>
+
+<important if="adding hotkey conflict detection for user-configurable shortcuts">
+- `Carbon RegisterEventHotKey` **查不到系统级/其它 app 已注册 hotkey**（Cmd+Space / Cmd+Tab 都返回 available）
+- 只能用静态黑名单 + "只提示不拦截"策略（黑名单见 specs/tracer/v03-findings.md F9）
+</important>
+
+<important if="implementing dual-mode hotkey (hold-to-talk + press-to-toggle)">
+- 单一 CGEventTap 用 `mask = (1 << flagsChanged) | (1 << keyDown)` 可同时监听两类事件
+- 单修饰键走 flagsChanged（按下/松开通过 `event.flags.intersection(modMask)` 判断）
+- 组合键走 keyDown + flags 精确匹配
+- 热切换不重建 tap，只更新活动绑定（见 specs/tracer/v03-findings.md F9）
+</important>
+
+<important if="adding app-internal floating toast / popup">
+- 复用 pill 的 NSPanel 配置（nonactivating + canBecomeKey=false + hidesOnDeactivate=false + .floating + .canJoinAllSpaces）即可在前台为其它 app 时保持可见
+- `ignoresMouseEvents = true` 让 toast 非交互，不干扰用户当前操作
+- 多 toast 堆叠：单例 Manager + maxStack=4 + 超出淘汰最老（见 specs/tracer/v03-findings.md F5）
+</important>
+
+<important if="implementing diff / tokenization for history comparison">
+- 不用 Apple `NLTokenizer(.word)`——对中文切词位置敏感不稳定（"对对对" 会被切成 ["对","对对"]，LCS 无法匹配）
+- 用自写 Unicode scalar 切分：CJK 按字、Latin/digit 按连续 run。30 行无依赖（见 specs/tracer/v03-findings-code.md F8）
+- 视觉上的"词粒度"由 LCS 后的连续段合并实现，不需要在切分阶段聚合词
+</important>
+
+<important if="adding hot-reload for config-driven services (api key, provider config, etc.)">
+- 不在 service 里缓存 key——每次构建请求时从 `Config` 读，避免 Settings 保存后的同步问题
+- WhisperService / LLMCleanupService 不持 `apiKey` 字段，`DictationPipeline.start()` 去掉启动期一次性注入（见 specs/tracer/v03-findings-code.md F10）
+</important>

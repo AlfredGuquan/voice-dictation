@@ -1,0 +1,32 @@
+metadata:
+  feature: "f11-progress-bar-trickle"
+  description: "进度条改为 Trickle 动画——快速填充后渐近到 ~95%，完成时跳 100%"
+  generated_at: "2026-04-14T00:00:00+08:00"
+  git_ref: "6de0cc7"
+  command: ".build/debug/VoiceDictation"
+  screenshot_dir: "/tmp/voice-v03-qa/f11-progress-bar-trickle"
+  qa_note: "QA 前关闭主 VoiceDictation 实例避免全局热键冲突 (pkill -f VoiceDictation)"
+
+stories:
+  - name: "处理态 fill 从左向右快速推进"
+    acceptance_criteria:
+      - "按热键录一段话松开后进入处理态，pill 内进度条 fill 从 0 快速向右推进"
+      - "前 ~0.5s 内 fill 达到约 70% 位置"
+
+  - name: "处理期间 fill 只向右前进不回缩"
+    acceptance_criteria:
+      - "人为延长处理时间（如网络降速），处理态持续 >3s 期间 fill 始终只向右前进，不出现向左收缩或跳回 0"
+      - "fill 在接近 95% 位置附近停住（渐近），不再明显移动"
+
+  - name: "ASR 完成时 fill 跳到 100% 后 pill 隐藏"
+    acceptance_criteria:
+      - "转录+清洗完成瞬间 fill 跳到 100%"
+      - "fill 到 100% 后 pill 在短时间内隐藏（不残留）"
+
+  - name: "短处理时长下动画不突兀"
+    acceptance_criteria:
+      - "实际处理时长 <1s 的场景下，fill 不出现跳变或闪烁，整体推进顺滑"
+
+  - name: "长处理时长下动画不让用户以为卡死"
+    acceptance_criteria:
+      - "实际处理时长 >5s 的场景下，fill 持续有缓慢推进或保持在 ~95% 位置，视觉上让用户感觉'还在进行'而非卡死"

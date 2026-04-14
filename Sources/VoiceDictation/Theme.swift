@@ -22,8 +22,14 @@ enum Theme {
     static let confirm      = Color(hex: 0x5D8C5A)
     static let cancel       = Color(hex: 0xC4653A)
 
-    static let diffRemoved  = Color(hex: 0xC4653A).opacity(0.10)
-    static let diffAdded    = Color(hex: 0x5D8C5A).opacity(0.12)
+    static let diffRemoved     = Color(hex: 0xC4653A).opacity(0.18)
+    static let diffRemovedText = Color(hex: 0xC4653A)
+    static let diffAdded       = Color(hex: 0x5D8C5A).opacity(0.12)
+
+    // Hotkey recorder states (v03-brief F9)
+    static let warn            = Color(hex: 0xB8862E)
+    static let warnBg          = Color(hex: 0xB8862E).opacity(0.10)
+    static let confirmBg       = Color(hex: 0x5D8C5A).opacity(0.10)
 }
 
 // MARK: - Color hex initializer

@@ -3,6 +3,11 @@
 *.swp
 .DS_Store
 
-# SPM build artifacts (but keep .build/*.md knowledge files)
-.build/*
+# SPM build artifacts (but keep .build/*.md knowledge files) — applies at any depth
+.build/
+**/.build/
 !.build/*.md
+!**/.build/*.md
+
+# QA screenshots — stay local, may contain desktop/environment context
+screenshots/

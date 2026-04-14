@@ -1,27 +1,32 @@
 import SwiftUI
 
+enum SidebarSection: String, CaseIterable {
+    case history = "历史"
+    case vocabulary = "词库"
+    case settings = "设置"
+
+    var icon: String {
+        switch self {
+        case .history: return "clock"
+        case .vocabulary: return "book"
+        case .settings: return "gearshape"
+        }
+    }
+}
+
+/// Holds navigation state so AppDelegate can drive tab switches from the main menu.
+final class MainNavigationState: ObservableObject {
+    @Published var selectedSection: SidebarSection = .history
+}
+
 /// Root view for the main application window.
 /// Sidebar navigation with three sections: History, Vocabulary, Settings.
 struct MainContentView: View {
     let historyStore: HistoryStore
     let vocabularyStore: VocabularyStore
+    @ObservedObject var navigation: MainNavigationState
 
-    @State private var selectedSection: SidebarSection = .history
     @State private var selectedRecordID: UUID?
-
-    enum SidebarSection: String, CaseIterable {
-        case history = "历史"
-        case vocabulary = "词库"
-        case settings = "设置"
-
-        var icon: String {
-            switch self {
-            case .history: return "clock"
-            case .vocabulary: return "book"
-            case .settings: return "gearshape"
-            }
-        }
-    }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -63,7 +68,7 @@ struct MainContentView: View {
 
     private func sidebarItem(section: SidebarSection) -> some View {
         Button(action: {
-            selectedSection = section
+            navigation.selectedSection = section
             if section != .history {
                 selectedRecordID = nil
             }
@@ -76,11 +81,11 @@ struct MainContentView: View {
                     .font(.system(size: 13))
                 Spacer()
             }
-            .foregroundColor(selectedSection == section ? Theme.accent : Theme.textSecondary)
+            .foregroundColor(navigation.selectedSection == section ? Theme.accent : Theme.textSecondary)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(
-                selectedSection == section
+                navigation.selectedSection == section
                     ? Theme.accent.opacity(0.1)
                     : Color.clear
             )
@@ -94,7 +99,7 @@ struct MainContentView: View {
 
     @ViewBuilder
     private var contentArea: some View {
-        switch selectedSection {
+        switch navigation.selectedSection {
         case .history:
             historyContent
 

@@ -13,17 +13,11 @@ final class PillViewController: NSViewController {
 
     private(set) var state: PillState = .recording
 
-    // Layout constants (v0.3 design: 232x40, radius 22)
-    private let pillWidth: CGFloat = 232
-    private let pillHeight: CGFloat = 40
-    private let cornerRadius: CGFloat = 22
-    private let buttonSize: CGFloat = 30
-    private let buttonInset: CGFloat = 5
-    private let barCount = 10
-    private let waveformBaseHeights: [CGFloat] = [8, 14, 20, 26, 22, 24, 18, 20, 12, 16]
-    private let progressStageOneDuration: CFTimeInterval = 0.5
-    private let progressStageTwoDuration: CFTimeInterval = 2.5
-    private let progressCompleteDuration: CFTimeInterval = 0.2
+    // Layout constants
+    private let pillWidth: CGFloat = 280
+    private let pillHeight: CGFloat = 48
+    private let buttonSize: CGFloat = 36
+    private let barCount = 12
 
     // Views
     private var containerView: NSView!
@@ -39,18 +33,11 @@ final class PillViewController: NSViewController {
 
     // Animation
     private var waveformTimer: Timer?
-    private var progressPhase: ProgressPhase = .idle
-    private var progressCurrent: CGFloat = 0  // last committed fill ratio [0,1]
+    private var progressTimer: Timer?
+    private var progressValue: CGFloat = 0
 
-    private enum ProgressPhase {
-        case idle
-        case stageOne
-        case stageTwo
-        case completing
-    }
-
-    // Colors — Warm Glass theme (v0.3 spec: rgb 255,252,247 / alpha 0.92)
-    private let bgColor = NSColor(red: 255.0/255.0, green: 252.0/255.0, blue: 247.0/255.0, alpha: 0.92)
+    // Colors — Warm Glass theme from mockup
+    private let bgColor = NSColor(red: 1.0, green: 0.99, blue: 0.98, alpha: 0.82)
     private let accentColor = NSColor(red: 217/255, green: 119/255, blue: 87/255, alpha: 1.0)  // #D97757
     private let accentHoverColor = NSColor(red: 196/255, green: 101/255, blue: 58/255, alpha: 1.0)  // #C4653A
     private let confirmColor = NSColor(red: 93/255, green: 140/255, blue: 90/255, alpha: 1.0)  // #5D8C5A
@@ -65,10 +52,10 @@ final class PillViewController: NSViewController {
     }
 
     private func setupUI() {
-        // Container with pill shape (radius 22, not full capsule)
+        // Container with pill shape
         containerView = NSView(frame: view.bounds)
         containerView.wantsLayer = true
-        containerView.layer?.cornerRadius = cornerRadius
+        containerView.layer?.cornerRadius = pillHeight / 2
         containerView.layer?.masksToBounds = true
         view.addSubview(containerView)
 
@@ -86,31 +73,24 @@ final class PillViewController: NSViewController {
         warmOverlay.layer?.backgroundColor = bgColor.cgColor
         containerView.addSubview(warmOverlay)
 
-        // Border (0.05 alpha per v0.3 brief)
+        // Border
         containerView.layer?.borderWidth = 1
-        containerView.layer?.borderColor = NSColor(white: 0, alpha: 0.05).cgColor
+        containerView.layer?.borderColor = NSColor(white: 0, alpha: 0.06).cgColor
 
-        // Shadow on parent view — uses shadowPath to avoid rectangular halo (F6)
+        // Shadow on parent view
         view.wantsLayer = true
-        if let rootLayer = view.layer {
-            rootLayer.shadowColor = NSColor(red: 60/255, green: 40/255, blue: 25/255, alpha: 1).cgColor
-            rootLayer.shadowOffset = CGSize(width: 0, height: -6)
-            rootLayer.shadowRadius = 20
-            rootLayer.shadowOpacity = 0.10
-            rootLayer.shadowPath = CGPath(
-                roundedRect: view.bounds,
-                cornerWidth: cornerRadius,
-                cornerHeight: cornerRadius,
-                transform: nil
-            )
-        }
+        view.shadow = NSShadow()
+        view.layer?.shadowColor = NSColor(white: 0, alpha: 0.15).cgColor
+        view.layer?.shadowOffset = CGSize(width: 0, height: -4)
+        view.layer?.shadowRadius = 24
+        view.layer?.shadowOpacity = 1
 
         // Cancel button (left)
         cancelButton = makeCircleButton(
             backgroundColor: cancelBgColor,
             symbolColor: cancelColor
         )
-        cancelButton.frame.origin = CGPoint(x: buttonInset, y: (pillHeight - buttonSize) / 2)
+        cancelButton.frame.origin = CGPoint(x: 6, y: (pillHeight - buttonSize) / 2)
         drawX(on: cancelButton)
         cancelButton.target = self
         cancelButton.action = #selector(cancelTapped)
@@ -122,7 +102,7 @@ final class PillViewController: NSViewController {
             symbolColor: confirmColor
         )
         confirmButton.frame.origin = CGPoint(
-            x: pillWidth - buttonSize - buttonInset,
+            x: pillWidth - buttonSize - 6,
             y: (pillHeight - buttonSize) / 2
         )
         drawCheckmark(on: confirmButton)
@@ -131,27 +111,28 @@ final class PillViewController: NSViewController {
         containerView.addSubview(confirmButton)
 
         // Waveform container (center area)
-        let centerGap: CGFloat = 6
-        let centerX = buttonInset + buttonSize + centerGap
-        let centerWidth = pillWidth - (buttonInset + buttonSize + centerGap) * 2
+        let centerX = 6 + buttonSize + 8
+        let centerWidth = pillWidth - (6 + buttonSize + 8) * 2
         waveformContainer = NSView(
             frame: NSRect(x: centerX, y: 0, width: centerWidth, height: pillHeight)
         )
         containerView.addSubview(waveformContainer)
 
-        // Create waveform bars (v0.3: 10 bars, width 2.5, gap 2.5)
-        let barWidth: CGFloat = 2.5
-        let barGap: CGFloat = 2.5
+        // Create waveform bars
+        let barWidth: CGFloat = 3
+        let barGap: CGFloat = 3
         let totalBarsWidth = CGFloat(barCount) * barWidth + CGFloat(barCount - 1) * barGap
         let startX = (centerWidth - totalBarsWidth) / 2
+
+        let baseHeights: [CGFloat] = [8, 14, 20, 28, 22, 32, 18, 26, 14, 20, 10, 16]
 
         for i in 0..<barCount {
             let bar = NSView()
             bar.wantsLayer = true
             bar.layer?.backgroundColor = accentColor.withAlphaComponent(0.8).cgColor
-            bar.layer?.cornerRadius = barWidth / 2
+            bar.layer?.cornerRadius = 1.5
 
-            let height = waveformBaseHeights[i % waveformBaseHeights.count]
+            let height = baseHeights[i % baseHeights.count]
             let x = startX + CGFloat(i) * (barWidth + barGap)
             let y = (pillHeight - height) / 2
             bar.frame = NSRect(x: x, y: y, width: barWidth, height: height)
@@ -167,10 +148,9 @@ final class PillViewController: NSViewController {
         progressContainer.isHidden = true
         containerView.addSubview(progressContainer)
 
-        // Progress label (top half of pill)
-        let labelHeight: CGFloat = 14
+        // Progress label
         progressLabel = NSTextField(
-            frame: NSRect(x: 8, y: pillHeight / 2, width: centerWidth - 16, height: labelHeight)
+            frame: NSRect(x: 16, y: pillHeight / 2 + 1, width: centerWidth - 32, height: 16)
         )
         progressLabel.stringValue = "Processing..."
         progressLabel.isEditable = false
@@ -182,42 +162,26 @@ final class PillViewController: NSViewController {
         progressLabel.alignment = .center
         progressContainer.addSubview(progressLabel)
 
-        // Progress track (bottom half of pill, v0.3: height 2.5, bg 0.07)
-        let trackHeight: CGFloat = 2.5
-        let trackInset: CGFloat = 8
-        let trackY = pillHeight / 2 - trackHeight - 4
+        // Progress track
+        let trackHeight: CGFloat = 3
+        let trackY = pillHeight / 2 - trackHeight - 3
         progressTrack = NSView(
-            frame: NSRect(
-                x: trackInset,
-                y: trackY,
-                width: centerWidth - trackInset * 2,
-                height: trackHeight
-            )
+            frame: NSRect(x: 16, y: trackY, width: centerWidth - 32, height: trackHeight)
         )
         progressTrack.wantsLayer = true
-        progressTrack.layer?.backgroundColor = NSColor(white: 0, alpha: 0.07).cgColor
-        progressTrack.layer?.cornerRadius = trackHeight / 2
+        progressTrack.layer?.backgroundColor = NSColor(white: 0, alpha: 0.06).cgColor
+        progressTrack.layer?.cornerRadius = 1.5
         progressContainer.addSubview(progressTrack)
 
-        // Progress fill (width driven by CAAnimation — starts at 0)
+        // Progress fill
         progressFill = NSView(
             frame: NSRect(x: 0, y: 0, width: 0, height: trackHeight)
         )
         progressFill.wantsLayer = true
-        progressFill.layer?.cornerRadius = trackHeight / 2
+        progressFill.layer?.cornerRadius = 1.5
+        // Gradient-like appearance using the accent color
         progressFill.layer?.backgroundColor = accentColor.cgColor
         progressTrack.addSubview(progressFill)
-    }
-
-    override func viewDidLayout() {
-        super.viewDidLayout()
-        // Keep shadowPath in sync with any bounds change so rounded halo never drifts to rect.
-        view.layer?.shadowPath = CGPath(
-            roundedRect: view.bounds,
-            cornerWidth: cornerRadius,
-            cornerHeight: cornerRadius,
-            transform: nil
-        )
     }
 
     // MARK: - State transitions
@@ -247,9 +211,10 @@ final class PillViewController: NSViewController {
     /// Update waveform bars based on audio level (0.0 to 1.0)
     func updateAudioLevel(_ level: Float) {
         guard state == .recording else { return }
+        let baseHeights: [CGFloat] = [8, 14, 20, 28, 22, 32, 18, 26, 14, 20, 10, 16]
 
         for (i, bar) in waveformBars.enumerated() {
-            let baseHeight = waveformBaseHeights[i % waveformBaseHeights.count]
+            let baseHeight = baseHeights[i % baseHeights.count]
             // Scale bars by audio level with some randomness
             let scale = 0.3 + CGFloat(level) * 0.7 * (0.8 + CGFloat.random(in: 0...0.4))
             let newHeight = max(4, baseHeight * scale)
@@ -278,8 +243,9 @@ final class PillViewController: NSViewController {
     }
 
     private func animateWaveformStep() {
+        let baseHeights: [CGFloat] = [8, 14, 20, 28, 22, 32, 18, 26, 14, 20, 10, 16]
         for (i, bar) in waveformBars.enumerated() {
-            let baseHeight = waveformBaseHeights[i % waveformBaseHeights.count]
+            let baseHeight = baseHeights[i % baseHeights.count]
             // Idle animation: gentle bounce between 40% and 100% of base height
             let scale = 0.4 + 0.6 * CGFloat.random(in: 0...1)
             let newHeight = baseHeight * scale
@@ -302,120 +268,43 @@ final class PillViewController: NSViewController {
         waveformTimer = nil
     }
 
-    // MARK: - Progress animation (F11 trickle, state-driven)
-    //
-    // Three phases:
-    //   1. 0   → 70%  over 500ms  (ease-out)
-    //   2. 70% → 95%  over 2500ms (slower asymptote)
-    //   3. 95% → 100% over 200ms  (linear) on ASR completion
-    // Invariant: fill width never decreases. `startProgressAnimation()` is idempotent
-    // while a phase is in flight; full reset goes through `stopProgressAnimation()`.
+    // MARK: - Progress animation
 
     private func startProgressAnimation() {
-        guard progressPhase == .idle else { return }
-        resetProgress()
-        progressPhase = .stageOne
-        progressFill.alphaValue = 1
-
-        animateFill(to: 0.70,
-                    duration: progressStageOneDuration,
-                    timing: CAMediaTimingFunction(controlPoints: 0.25, 0.9, 0.35, 1)
-        ) { [weak self] finished in
-            guard let self = self, finished, self.progressPhase == .stageOne else { return }
-            self.progressPhase = .stageTwo
-            self.animateFill(to: 0.95,
-                             duration: self.progressStageTwoDuration,
-                             timing: CAMediaTimingFunction(controlPoints: 0.3, 0.7, 0.4, 1),
-                             completion: nil)
+        progressValue = 0
+        progressTimer?.invalidate()
+        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) {
+            [weak self] _ in
+            self?.animateProgressStep()
         }
     }
 
-    /// External entry: ASR pipeline finished → jump to 100% then caller hides the pill.
-    func completeProgressAnimation(completion: (() -> Void)? = nil) {
-        guard progressPhase != .idle else {
-            completion?()
-            return
-        }
-        progressPhase = .completing
-        animateFill(to: 1.0,
-                    duration: progressCompleteDuration,
-                    timing: CAMediaTimingFunction(name: .linear)
-        ) { _ in
-            completion?()
-        }
-    }
+    private func animateProgressStep() {
+        progressValue += 0.01
+        if progressValue > 1.0 { progressValue = 0 }
 
-    /// Halt the trickle in place — keep the current fill width, drop pending phases.
-    /// Used on error / cancel paths so the bar doesn't keep creeping toward 95% while
-    /// the pill fades out (which would visually read as "succeeding").
-    func freezeProgressAnimation() {
-        guard progressPhase != .idle else { return }
-        progressPhase = .idle
-        // Snap to the in-flight rendered width before removing the animation;
-        // otherwise CA reverts to the model value (the phase target).
-        let renderedWidth = progressFill.layer?.presentation()?.bounds.width
-            ?? progressFill.frame.width
-        progressFill.layer?.removeAllAnimations()
+        let trackWidth = progressTrack.bounds.width
+        // Sweep animation: fill grows then resets
+        let fillWidth: CGFloat
+        if progressValue < 0.7 {
+            fillWidth = trackWidth * (progressValue / 0.7)
+        } else {
+            fillWidth = trackWidth * (1.0 - (progressValue - 0.7) / 0.3)
+        }
+
+        let opacity: CGFloat = progressValue < 0.5 ? 0.6 + progressValue * 0.8 : 1.4 - progressValue * 0.8
+
         progressFill.frame = NSRect(
             x: 0, y: 0,
-            width: renderedWidth,
+            width: max(0, fillWidth),
             height: progressTrack.bounds.height
         )
-        let trackWidth = progressTrack.bounds.width
-        progressCurrent = trackWidth > 0 ? renderedWidth / trackWidth : 0
+        progressFill.alphaValue = opacity
     }
 
     private func stopProgressAnimation() {
-        // Cancel any in-flight chained animation and reset fill to 0 without animation.
-        progressPhase = .idle
-        resetProgress()
-    }
-
-    private func resetProgress() {
-        progressCurrent = 0
-        progressFill.layer?.removeAllAnimations()
-        progressFill.frame = NSRect(
-            x: 0, y: 0,
-            width: 0,
-            height: progressTrack.bounds.height
-        )
-    }
-
-    /// Animate fill ratio toward `target` (clamped, monotonic). Completion is called
-    /// with `finished = true` only if the animation reached its target without being
-    /// cancelled (phase changed or view torn down).
-    // Assumes pill size is fixed; if pill becomes resizable, re-read trackWidth on each phase transition.
-    private func animateFill(
-        to target: CGFloat,
-        duration: CFTimeInterval,
-        timing: CAMediaTimingFunction,
-        completion: ((Bool) -> Void)?
-    ) {
-        let trackWidth = progressTrack.bounds.width
-        let clamped = min(1.0, max(progressCurrent, target))
-        guard clamped > progressCurrent else {
-            completion?(true)
-            return
-        }
-        let targetWidth = trackWidth * clamped
-        let startedPhase = progressPhase
-
-        NSAnimationContext.runAnimationGroup({ ctx in
-            ctx.duration = duration
-            ctx.timingFunction = timing
-            progressFill.animator().frame = NSRect(
-                x: 0, y: 0,
-                width: targetWidth,
-                height: progressTrack.bounds.height
-            )
-        }, completionHandler: { [weak self] in
-            guard let self = self else { return }
-            let cancelled = self.progressPhase != startedPhase
-            if !cancelled {
-                self.progressCurrent = clamped
-            }
-            completion?(!cancelled)
-        })
+        progressTimer?.invalidate()
+        progressTimer = nil
     }
 
     // MARK: - Actions
@@ -452,15 +341,11 @@ final class PillViewController: NSViewController {
             path.lineWidth = 1.8
             path.lineCapStyle = .round
             self.cancelColor.setStroke()
-            // Map X onto the same 16×16 viewBox the checkmark uses, so the two
-            // glyphs keep matching visual weight as buttonSize scales.
-            // Endpoints 4,4 → 12,12 and 12,4 → 4,12 give a ~11px stroke at size=16,
-            // visually matching the checkmark's 12.5−3.5 = 9 horizontal span.
-            let scale = size / 16
-            path.move(to: NSPoint(x: 4 * scale, y: 4 * scale))
-            path.line(to: NSPoint(x: 12 * scale, y: 12 * scale))
-            path.move(to: NSPoint(x: 12 * scale, y: 4 * scale))
-            path.line(to: NSPoint(x: 4 * scale, y: 12 * scale))
+            let inset: CGFloat = 12
+            path.move(to: NSPoint(x: inset, y: inset))
+            path.line(to: NSPoint(x: size - inset, y: size - inset))
+            path.move(to: NSPoint(x: size - inset, y: inset))
+            path.line(to: NSPoint(x: inset, y: size - inset))
             path.stroke()
             return true
         }

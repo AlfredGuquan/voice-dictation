@@ -8,7 +8,7 @@ final class FloatingPillPanel: NSPanel {
 
     /// Create a pill-shaped floating panel positioned at screen bottom center.
     /// Returns nil if no screen is available.
-    static func create(width: CGFloat = 232, height: CGFloat = 40) -> FloatingPillPanel? {
+    static func create(width: CGFloat = 280, height: CGFloat = 48) -> FloatingPillPanel? {
         guard let screen = NSScreen.main else {
             return nil
         }
@@ -30,9 +30,7 @@ final class FloatingPillPanel: NSPanel {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.isOpaque = false
         panel.backgroundColor = .clear
-        // Disable NSPanel's built-in shadow — PillViewController draws a rounded
-        // shadowPath on the content layer to avoid the rectangular halo (F6).
-        panel.hasShadow = false
+        panel.hasShadow = true
         panel.animationBehavior = .utilityWindow
 
         return panel

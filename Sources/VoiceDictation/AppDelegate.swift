@@ -4,6 +4,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let pipeline = DictationPipeline()
     private var statusItem: NSStatusItem?
     private var mainWindowController: MainWindowController?
+    private var hotkeyStatusMenuItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Menu bar icon
@@ -15,8 +16,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             vocabularyStore: pipeline.vocabularyStore
         )
 
+        // Application menu lets Cmd+, reach Settings when main window is frontmost.
+        // Without NSApp.mainMenu, status-item menu keyEquivalents only fire on popup.
+        setupMainMenu()
+
+        // Keep the status-item hint label in sync with the active hotkey.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(refreshHotkeyStatusLabel),
+            name: .hotkeyConfigChanged,
+            object: nil
+        )
+
         // Start the dictation pipeline
         pipeline.start()
+        refreshHotkeyStatusLabel()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -39,9 +53,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let openWindowItem = NSMenuItem(
             title: "打开主窗口",
             action: #selector(openMainWindow),
-            keyEquivalent: ","
+            keyEquivalent: ""
         )
-        openWindowItem.keyEquivalentModifierMask = [.command]
         openWindowItem.target = self
         menu.addItem(openWindowItem)
 
@@ -54,6 +67,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         statusMenuItem.isEnabled = false
         menu.addItem(statusMenuItem)
+        hotkeyStatusMenuItem = statusMenuItem
 
         menu.addItem(NSMenuItem.separator())
         menu.addItem(
@@ -65,5 +79,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openMainWindow() {
         mainWindowController?.toggleWindow()
+    }
+
+    @objc private func refreshHotkeyStatusLabel() {
+        let name = Config.hotkey.displayName
+        hotkeyStatusMenuItem?.title = "Press \(name) to dictate"
+    }
+
+    @objc private func openSettings() {
+        mainWindowController?.showSettings()
+    }
+
+    private func setupMainMenu() {
+        let mainMenu = NSMenu()
+
+        // Application menu (first item's submenu is treated as the app menu).
+        let appMenuItem = NSMenuItem()
+        mainMenu.addItem(appMenuItem)
+
+        let appMenu = NSMenu(title: "Voice Dictation")
+
+        let prefItem = NSMenuItem(
+            title: "Preferences...",
+            action: #selector(openSettings),
+            keyEquivalent: ","
+        )
+        prefItem.keyEquivalentModifierMask = [.command]
+        prefItem.target = self
+        appMenu.addItem(prefItem)
+
+        appMenu.addItem(NSMenuItem.separator())
+
+        appMenu.addItem(
+            NSMenuItem(
+                title: "Quit Voice Dictation",
+                action: #selector(NSApplication.terminate(_:)),
+                keyEquivalent: "q"
+            )
+        )
+
+        appMenuItem.submenu = appMenu
+        NSApp.mainMenu = mainMenu
     }
 }

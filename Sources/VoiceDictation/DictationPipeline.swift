@@ -13,12 +13,12 @@ final class DictationPipeline {
 
     private(set) var state: State = .idle
 
-    private let hotkeyManager = HotkeyManager()
+    let hotkeyManager = HotkeyManager(hotkey: Config.hotkey)
     private let audioRecorder = AudioRecorder()
     let vocabularyStore = VocabularyStore()
     let historyStore = HistoryStore()
-    private var whisperService: WhisperService?
-    private var cleanupService: LLMCleanupService?
+    private let whisperService = WhisperService()
+    private let cleanupService = LLMCleanupService()
 
     // UI
     private var pillPanel: FloatingPillPanel?
@@ -30,16 +30,16 @@ final class DictationPipeline {
     private var recordingStartTime: Date?
 
     func start() {
-        // Load API key
-        let env = EnvLoader.load()
-        guard let apiKey = env["OPENAI_API_KEY"], !apiKey.isEmpty else {
-            print("[Pipeline] ERROR: OPENAI_API_KEY not found in .env")
-            showNotification("Voice Dictation Error", body: "OPENAI_API_KEY not found. Create .env file.")
-            return
+        // Startup sanity check: warn the user if no key is configured yet.
+        // Services read Config.apiKey on every request, so Settings updates
+        // take effect without a restart.
+        if Config.apiKey == nil {
+            print("[Pipeline] WARNING: OPENAI_API_KEY not set; configure it in Settings")
+            showNotification(
+                "Voice Dictation",
+                body: "OPENAI_API_KEY not set. Open Settings to configure."
+            )
         }
-
-        whisperService = WhisperService(apiKey: apiKey)
-        cleanupService = LLMCleanupService(apiKey: apiKey)
 
         // Load personal vocabulary (creates default file if needed)
         vocabularyStore.load()
@@ -47,11 +47,18 @@ final class DictationPipeline {
         // Load history
         historyStore.load()
 
-        // Setup hotkey
+        // Setup hotkey — dispatch per event kind (see HotkeyManager.HotkeyEvent)
         hotkeyManager.onEvent = { [weak self] event in
             guard let self = self else { return }
             switch event {
-            case .toggleRecording:
+            case .singleModifierDown:
+                // "Hold to talk" — start on press
+                if self.state == .idle { self.startRecording() }
+            case .singleModifierUp:
+                // "Hold to talk" — stop on release
+                if self.state == .recording { self.stopAndProcess() }
+            case .comboPress:
+                // "Press to toggle"
                 self.handleToggle()
             case .cancel:
                 self.handleCancel()
@@ -66,7 +73,55 @@ final class DictationPipeline {
             )
         }
 
-        print("[Pipeline] Ready. Press Right Option to start/stop dictation.")
+        // Hot reload: Settings posts .hotkeyConfigChanged after writing new hotkey.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(hotkeyConfigDidChange),
+            name: .hotkeyConfigChanged,
+            object: nil
+        )
+        // Capture bridge: while Settings is recording a new hotkey, tell the
+        // global CGEvent tap to pass events through so the local NSEvent
+        // monitor in SettingsView can receive them.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(hotkeyCaptureBegin),
+            name: .hotkeyCaptureBegin,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(hotkeyCaptureEnd),
+            name: .hotkeyCaptureEnd,
+            object: nil
+        )
+
+        print("[Pipeline] Ready. Press \(hotkeyManager.currentHotkey.displayName) to dictate.")
+    }
+
+    @objc private func hotkeyConfigDidChange() {
+        // Called on main thread via NotificationCenter from SettingsView save.
+        // If recording is in flight, cancel it first — the user's old binding
+        // is about to disappear and their "held" state would never receive a
+        // matching release event.
+        if state == .recording {
+            handleCancel()
+        }
+        hotkeyManager.reload(to: Config.hotkey)
+    }
+
+    @objc private func hotkeyCaptureBegin() {
+        // If the user starts recording a new hotkey mid-dictation, cancel
+        // the in-flight recording so we don't strand `hotkeyManager.isActive`
+        // and leak UI state.
+        if state == .recording {
+            handleCancel()
+        }
+        hotkeyManager.beginCapture()
+    }
+
+    @objc private func hotkeyCaptureEnd() {
+        hotkeyManager.endCapture()
     }
 
     // MARK: - Event handlers
@@ -108,7 +163,10 @@ final class DictationPipeline {
             print("[Pipeline] Recording started")
         } catch {
             print("[Pipeline] Failed to start recording: \(error)")
-            showNotification("Voice Dictation Error", body: "Failed to start recording: \(error.localizedDescription)")
+            ToastManager.shared.show(
+                .error,
+                message: "Failed to start recording: \(error.localizedDescription)"
+            )
         }
     }
 
@@ -136,21 +194,16 @@ final class DictationPipeline {
     // MARK: - Processing pipeline
 
     private func processAudio(url: URL) async {
-        guard let whisper = whisperService, let cleanup = cleanupService else {
-            await MainActor.run { handleError("Services not initialized", audioURL: url) }
-            return
-        }
-
         do {
             // Step 1: Transcribe
             print("[Pipeline] Transcribing...")
-            let transcription = try await whisper.transcribe(fileURL: url)
+            let transcription = try await whisperService.transcribe(fileURL: url)
             let rawText = transcription.text
 
             if rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 await MainActor.run {
                     self.state = .idle
-                    hidePill()
+                    completeAndHidePill()
                     print("[Pipeline] Empty transcription, nothing to inject")
                 }
                 // Clean up temp file
@@ -160,7 +213,7 @@ final class DictationPipeline {
 
             // Step 2: Cleanup (with personal vocabulary)
             print("[Pipeline] Cleaning up...")
-            let cleanedText = try await cleanup.cleanup(
+            let cleanedText = try await cleanupService.cleanup(
                 rawText: rawText,
                 vocabulary: self.vocabularyStore.current
             )
@@ -168,7 +221,7 @@ final class DictationPipeline {
             if cleanedText.isEmpty {
                 await MainActor.run {
                     self.state = .idle
-                    hidePill()
+                    completeAndHidePill()
                     print("[Pipeline] Cleaned text is empty, nothing to inject")
                 }
                 try? FileManager.default.removeItem(at: url)
@@ -191,7 +244,7 @@ final class DictationPipeline {
                 self.historyStore.addRecord(record)
 
                 self.state = .idle
-                hidePill()
+                completeAndHidePill()
             }
 
             // Clean up temp audio file
@@ -207,6 +260,9 @@ final class DictationPipeline {
     private func handleError(_ message: String, audioURL: URL) {
         print("[Pipeline] Error: \(message)")
         state = .idle
+        // Freeze the trickle in place so it doesn't keep creeping toward 95%
+        // during the pill's fade-out (would visually read as success).
+        pillVC?.freezeProgressAnimation()
         hidePill()
 
         let duration = recordingStartTime.map { Date().timeIntervalSince($0) } ?? 0
@@ -222,12 +278,14 @@ final class DictationPipeline {
             )
             historyStore.addRecord(record)
 
-            showNotification(
-                "Voice Dictation Error",
-                body: "\(message)\nAudio saved: \(historyURL.lastPathComponent)"
+            // Toast is 320pt wide — filenames truncate to "…". The history list
+            // already surfaces the file, so just confirm persistence here.
+            ToastManager.shared.show(
+                .error,
+                message: "\(message) · Audio saved to history"
             )
         } else {
-            showNotification("Voice Dictation Error", body: message)
+            ToastManager.shared.show(.error, message: message)
         }
     }
 
@@ -269,6 +327,18 @@ final class DictationPipeline {
         pillPanel?.hideAnimated { [weak self] in
             self?.pillPanel = nil
             self?.pillVC = nil
+        }
+    }
+
+    /// Complete the processing progress bar (jump to 100%) before hiding the pill.
+    /// Used on the happy path after ASR + cleanup succeed and text is injected.
+    private func completeAndHidePill() {
+        guard let vc = pillVC else {
+            hidePill()
+            return
+        }
+        vc.completeProgressAnimation { [weak self] in
+            self?.hidePill()
         }
     }
 

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice Dictation · 方案可视化对比</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #F5F0E8;
+    --bg-base: #FAF7F2;
+    --bg-surface: #F0EBE3;
+    --bg-card: #FFFFFF;
+    --bg-pill: rgba(30, 28, 24, 0.92);
+    --text-primary: #1A1A1A;
+    --text-secondary: #6B6560;
+    --text-tertiary: #9C958C;
+    --accent: #D97757;
+    --accent-hover: #C4653A;
+    --confirm: #5D8C5A;
+    --cancel: #C4653A;
+    --diff-removed: rgba(196, 101, 58, 0.14);
+    --diff-removed-border: rgba(196, 101, 58, 0.45);
+    --border: #E8E0D4;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-pill: 999px;
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03);
+    --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'DM Mono', 'SF Mono', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding: 48px 32px;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  h1 { font-size: 28px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.02em; }
+  .subtitle { color: var(--text-secondary); margin-bottom: 40px; font-size: 15px; }
+  h2 { font-size: 20px; font-weight: 600; margin-bottom: 6px; letter-spacing: -0.01em; }
+  .section-hint { color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; }
+  section { margin-bottom: 56px; }
+
+  /* ---------- Pills (progress bar previews) ---------- */
+  .pill-grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  .pill-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    box-shadow: var(--shadow-card);
+  }
+  .pill-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .pill-title { font-weight: 600; font-size: 16px; }
+  .pill-title .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: var(--radius-pill);
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .pill-desc { color: var(--text-secondary); font-size: 13px; }
+
+  /* The dark floating pill shell, matches the real app */
+  .pill {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--bg-pill);
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: var(--radius-pill);
+    width: 280px;
+    margin: 0 auto;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  }
+  .pill-icon {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .pill-label { font-size: 13px; color: rgba(255,255,255,0.9); white-space: nowrap; }
+  .pill-track {
+    flex: 1; height: 4px; background: rgba(255,255,255,0.18);
+    border-radius: 2px; position: relative; overflow: hidden;
+  }
+  .pill-fill {
+    position: absolute; top: 0; left: 0; height: 100%;
+    background: linear-gradient(90deg, var(--accent), #F2A07A);
+    border-radius: 2px;
+  }
+
+  /* Animation A: hard reset */
+  .anim-A .pill-fill {
+    animation: fillA 1.6s linear infinite;
+  }
+  @keyframes fillA {
+    0%   { width: 0%; opacity: 1; }
+    99%  { width: 100%; opacity: 1; }
+    100% { width: 0%; opacity: 1; }
+  }
+
+  /* Animation B: fade reset */
+  .anim-B .pill-fill {
+    animation: fillB 1.8s ease-out infinite;
+  }
+  @keyframes fillB {
+    0%   { width: 0%; opacity: 1; }
+    70%  { width: 100%; opacity: 1; }
+    85%  { width: 100%; opacity: 0; }
+    86%  { width: 0%; opacity: 0; }
+    100% { width: 0%; opacity: 1; }
+  }
+
+  /* Animation C: roaming chunk */
+  .anim-C .pill-fill {
+    width: 30%;
+    animation: fillC 1.6s ease-in-out infinite;
+  }
+  @keyframes fillC {
+    0%   { left: -30%; }
+    100% { left: 100%; }
+  }
+
+  /* ---------- Diff examples ---------- */
+  .diff-example {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    box-shadow: var(--shadow-card);
+    margin-bottom: 16px;
+  }
+  .diff-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .diff-title { font-weight: 600; font-size: 16px; }
+  .diff-title .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: var(--radius-pill);
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .diff-rows { display: grid; gap: 14px; }
+  .diff-row { display: grid; grid-template-columns: 72px 1fr; align-items: start; gap: 16px; }
+  .diff-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding-top: 4px;
+    font-family: var(--font-mono);
+  }
+  .diff-text {
+    font-size: 15px;
+    line-height: 1.8;
+    padding: 10px 14px;
+    background: var(--bg-base);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+  }
+  .diff-text.original { color: var(--text-secondary); }
+  .del {
+    background: var(--diff-removed);
+    color: var(--cancel);
+    text-decoration: line-through;
+    text-decoration-color: var(--diff-removed-border);
+    text-decoration-thickness: 1.5px;
+    padding: 1px 2px;
+    border-radius: 3px;
+  }
+  .diff-note {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .diff-note strong { color: var(--text-primary); font-weight: 600; }
+
+  .cta {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    box-shadow: var(--shadow-card);
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+  .cta strong { color: var(--text-primary); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>方案可视化对比</h1>
+  <p class="subtitle">Clarify 阶段 · 两个选择点的实际效果预览</p>
+
+  <!-- ============================================
+       SECTION 1: PROGRESS BAR
+       ============================================ -->
+  <section>
+    <h2>进度条动画（等待 ASR+LLM 处理时显示）</h2>
+    <p class="section-hint">下面三条进度条都在<strong>实时循环播放</strong>——观察"填充头"的移动方向和重置方式。</p>
+    <div class="pill-grid">
+
+      <!-- Option B: fade reset -->
+      <div class="pill-card">
+        <div class="pill-head">
+          <div class="pill-title">B. 淡出重置<span class="tag">你上次选的</span></div>
+          <div class="pill-desc">填满→整条淡出→从左重填</div>
+        </div>
+        <div class="pill anim-B">
+          <div class="pill-icon"></div>
+          <div class="pill-label">正在整理…</div>
+          <div class="pill-track"><div class="pill-fill"></div></div>
+        </div>
+      </div>
+
+      <!-- Option A: hard reset -->
+      <div class="pill-card">
+        <div class="pill-head">
+          <div class="pill-title">A. 硬重置循环</div>
+          <div class="pill-desc">填满→瞬间归零→再从左填（能看到瞬切）</div>
+        </div>
+        <div class="pill anim-A">
+          <div class="pill-icon"></div>
+          <div class="pill-label">正在整理…</div>
+          <div class="pill-track"><div class="pill-fill"></div></div>
+        </div>
+      </div>
+
+      <!-- Option C: roaming chunk -->
+      <div class="pill-card">
+        <div class="pill-head">
+          <div class="pill-title">C. 游走小块</div>
+          <div class="pill-desc">固定宽度的小块从左滑到右，滑出后从左再进（iOS 原生风格）</div>
+        </div>
+        <div class="pill anim-C">
+          <div class="pill-icon"></div>
+          <div class="pill-label">正在整理…</div>
+          <div class="pill-track"><div class="pill-fill"></div></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================
+       SECTION 2: DIFF GRANULARITY
+       ============================================ -->
+  <section>
+    <h2>历史对比视图 · diff 粒度</h2>
+    <p class="section-hint">同一段语音清洗结果，用两种粒度标记被删掉的填充词。观察哪种<strong>读起来更顺</strong>。</p>
+
+    <!-- Example 1: word-level -->
+    <div class="diff-example">
+      <div class="diff-head">
+        <div class="diff-title">词粒度<span class="tag">选项 1（推荐）</span></div>
+      </div>
+      <div class="diff-rows">
+        <div class="diff-row">
+          <div class="diff-label">原文</div>
+          <div class="diff-text original">嗯，我觉得这个方案其实挺好的，就是那个预算有点紧</div>
+        </div>
+        <div class="diff-row">
+          <div class="diff-label">标记</div>
+          <div class="diff-text">
+            <span class="del">嗯，</span>我觉得这个方案<span class="del">其实</span>挺好的，<span class="del">就是那个</span>预算有点紧
+          </div>
+        </div>
+      </div>
+      <div class="diff-note">
+        <strong>特点：</strong>整词整块高亮，视觉整齐；像"就是那个"这种多词填充会被作为一组划掉。
+      </div>
+    </div>
+
+    <!-- Example 2: character-level -->
+    <div class="diff-example">
+      <div class="diff-head">
+        <div class="diff-title">字符粒度<span class="tag">选项 2</span></div>
+      </div>
+      <div class="diff-rows">
+        <div class="diff-row">
+          <div class="diff-label">原文</div>
+          <div class="diff-text original">嗯，我觉得这个方案其实挺好的，就是那个预算有点紧</div>
+        </div>
+        <div class="diff-row">
+          <div class="diff-label">标记</div>
+          <div class="diff-text">
+            <span class="del">嗯</span>，我觉得这个方案<span class="del">其实</span>挺好的，<span class="del">就是那个</span>预算有点紧
+          </div>
+        </div>
+      </div>
+      <div class="diff-note">
+        <strong>差异在于：</strong>字符粒度会把连续删除区间拆碎。本例中和词粒度看起来接近，但在复杂改写（如"去一趟"改"去"）时会切出零散碎片，如
+        <span class="diff-text" style="display:inline-block; padding:2px 8px; margin:0 4px; font-size:14px;">
+          我下午<span class="del">要</span>去<span class="del">一趟</span>公司
+        </span>
+        —— 粒度越细碎片越多。
+      </div>
+    </div>
+  </section>
+
+  <div class="cta">
+    <strong>看完后告诉我：</strong>进度条选 A / B / C？diff 粒度选词还是字符？
+  </div>
+</div>
+</body>
+</html>
