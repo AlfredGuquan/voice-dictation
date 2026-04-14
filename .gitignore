@@ -6,3 +6,5 @@
 # SPM build artifacts (but keep .build/*.md knowledge files) — applies at any depth
 .build/
 **/.build/
+!.build/*.md
+!**/.build/*.md

@@ -150,7 +150,7 @@ final class DictationPipeline {
             if rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 await MainActor.run {
                     self.state = .idle
-                    hidePill()
+                    completeAndHidePill()
                     print("[Pipeline] Empty transcription, nothing to inject")
                 }
                 // Clean up temp file
@@ -168,7 +168,7 @@ final class DictationPipeline {
             if cleanedText.isEmpty {
                 await MainActor.run {
                     self.state = .idle
-                    hidePill()
+                    completeAndHidePill()
                     print("[Pipeline] Cleaned text is empty, nothing to inject")
                 }
                 try? FileManager.default.removeItem(at: url)
@@ -191,7 +191,7 @@ final class DictationPipeline {
                 self.historyStore.addRecord(record)
 
                 self.state = .idle
-                hidePill()
+                completeAndHidePill()
             }
 
             // Clean up temp audio file
@@ -269,6 +269,18 @@ final class DictationPipeline {
         pillPanel?.hideAnimated { [weak self] in
             self?.pillPanel = nil
             self?.pillVC = nil
+        }
+    }
+
+    /// Complete the processing progress bar (jump to 100%) before hiding the pill.
+    /// Used on the happy path after ASR + cleanup succeed and text is injected.
+    private func completeAndHidePill() {
+        guard let vc = pillVC else {
+            hidePill()
+            return
+        }
+        vc.completeProgressAnimation { [weak self] in
+            self?.hidePill()
         }
     }
 
