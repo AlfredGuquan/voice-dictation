@@ -82,15 +82,21 @@ enum Differ {
 
     /// Given original (`a`) and cleaned (`b`) token arrays, return a bool mask
     /// over `a` indicating which tokens are part of the LCS (i.e., preserved).
+    /// Comparison is case-insensitive — LLM cleanup often re-capitalizes tokens
+    /// (e.g., "claude" -> "Claude"), and we don't want that to mark the original
+    /// token as removed. Display still uses the original-case text from `a`.
     static func lcsMask(a: [String], b: [String]) -> [Bool] {
         let n = a.count, m = b.count
         if n == 0 { return [] }
         if m == 0 { return Array(repeating: false, count: n) }
 
+        let aLower = a.map { $0.lowercased() }
+        let bLower = b.map { $0.lowercased() }
+
         var dp = Array(repeating: Array(repeating: 0, count: m + 1), count: n + 1)
         for i in 0..<n {
             for j in 0..<m {
-                if a[i] == b[j] {
+                if aLower[i] == bLower[j] {
                     dp[i+1][j+1] = dp[i][j] + 1
                 } else {
                     dp[i+1][j+1] = max(dp[i+1][j], dp[i][j+1])
@@ -101,7 +107,7 @@ enum Differ {
         var mask = Array(repeating: false, count: n)
         var i = n, j = m
         while i > 0 && j > 0 {
-            if a[i-1] == b[j-1] {
+            if aLower[i-1] == bLower[j-1] {
                 mask[i-1] = true
                 i -= 1; j -= 1
             } else if dp[i-1][j] >= dp[i][j-1] {
@@ -169,9 +175,26 @@ enum Differ {
     }
 
     private static func isLatin(_ s: Unicode.Scalar) -> Bool {
-        return (s.value >= 0x41 && s.value <= 0x5A) ||
-               (s.value >= 0x61 && s.value <= 0x7A) ||
-               s.value == 0x2D
+        // Basic Latin letters + hyphen, plus Latin-1 Supplement and Latin Extended-A/B
+        // so accented tokens like "café", "résumé", "naïve" stay as a single run
+        // instead of being split at the accented scalar.
+        // Ranges:
+        //   A-Z / a-z : 0x41-0x5A / 0x61-0x7A
+        //   '-'       : 0x2D
+        //   Latin-1 Supplement letters   : 0x00C0-0x00FF
+        //   Latin Extended-A             : 0x0100-0x017F
+        //   Latin Extended-B             : 0x0180-0x024F
+        // (Skip the 0x00D7 multiplication sign and 0x00F7 division sign which
+        //  fall inside the Latin-1 letter block.)
+        let v = s.value
+        if (v >= 0x41 && v <= 0x5A) || (v >= 0x61 && v <= 0x7A) || v == 0x2D {
+            return true
+        }
+        if v >= 0x00C0 && v <= 0x024F {
+            if v == 0x00D7 || v == 0x00F7 { return false }
+            return true
+        }
+        return false
     }
 
     private static func isDigit(_ s: Unicode.Scalar) -> Bool {

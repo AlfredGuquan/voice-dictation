@@ -22,9 +22,13 @@ func isCJK(_ s: Unicode.Scalar) -> Bool {
     }
 }
 func isLatin(_ s: Unicode.Scalar) -> Bool {
-    return (s.value >= 0x41 && s.value <= 0x5A) ||
-           (s.value >= 0x61 && s.value <= 0x7A) ||
-           s.value == 0x2D
+    let v = s.value
+    if (v >= 0x41 && v <= 0x5A) || (v >= 0x61 && v <= 0x7A) || v == 0x2D { return true }
+    if v >= 0x00C0 && v <= 0x024F {
+        if v == 0x00D7 || v == 0x00F7 { return false }
+        return true
+    }
+    return false
 }
 func isDigit(_ s: Unicode.Scalar) -> Bool {
     return s.value >= 0x30 && s.value <= 0x39
@@ -70,17 +74,19 @@ func lcsMask(a: [String], b: [String]) -> [Bool] {
     let n = a.count, m = b.count
     if n == 0 { return [] }
     if m == 0 { return Array(repeating: false, count: n) }
+    let aLower = a.map { $0.lowercased() }
+    let bLower = b.map { $0.lowercased() }
     var dp = Array(repeating: Array(repeating: 0, count: m + 1), count: n + 1)
     for i in 0..<n {
         for j in 0..<m {
-            if a[i] == b[j] { dp[i+1][j+1] = dp[i][j] + 1 }
+            if aLower[i] == bLower[j] { dp[i+1][j+1] = dp[i][j] + 1 }
             else { dp[i+1][j+1] = max(dp[i+1][j], dp[i][j+1]) }
         }
     }
     var mask = Array(repeating: false, count: n)
     var i = n, j = m
     while i > 0 && j > 0 {
-        if a[i-1] == b[j-1] { mask[i-1] = true; i -= 1; j -= 1 }
+        if aLower[i-1] == bLower[j-1] { mask[i-1] = true; i -= 1; j -= 1 }
         else if dp[i-1][j] >= dp[i][j-1] { i -= 1 }
         else { j -= 1 }
     }
@@ -217,6 +223,71 @@ do {
     let segs = diff(original: "", cleaned: "something")
     if segs.isEmpty { print("  PASS C8 empty original") }
     else { print("  FAIL C8 empty original"); failures += 1 }
+}
+
+// C9 case-insensitive match — LLM re-capitalization must not mark original removed.
+do {
+    let original = "hello claude world"
+    let segs = diff(original: original, cleaned: "Hello Claude world")
+    expect("C9 case-insensitive removed", removedWords(segs), [])
+    if concatOriginal(segs) != original {
+        print("  FAIL C9 reconstruction"); failures += 1
+    } else { print("  PASS C9 reconstruction") }
+}
+
+// C10 accented Latin — "café" stays as one run; when cleaned drops it, only
+// "café" is marked removed and reconstruction still matches original.
+do {
+    let original = "嗯 café 好"
+    let segs = diff(original: original, cleaned: "好")
+    let removed = removedWords(segs)
+    // "嗯" and "café" are each removed (separated by spaces/unchanged gaps).
+    let hasCafeRemoved = removed.contains("café")
+    let hasSplitCafe = removed.contains { $0 != "café" && $0.contains("caf") }
+    if hasCafeRemoved && !hasSplitCafe {
+        print("  PASS C10 accented removed as one run")
+    } else {
+        print("  FAIL C10 accented split: removed=\(removed)"); failures += 1
+    }
+    if concatOriginal(segs) != original {
+        print("  FAIL C10 reconstruction"); failures += 1
+    } else { print("  PASS C10 reconstruction") }
+}
+
+// C11 roundtrip — concat(seg.text) must equal original for every existing case.
+do {
+    struct Case { let orig: String; let clean: String; let label: String }
+    let cases: [Case] = [
+        .init(orig: "嗯，我觉得这个方案其实挺好的", clean: "我觉得这个方案挺好的", label: "C1"),
+        .init(orig: "我我我觉得这个这个 feature 啊", clean: "我觉得这个 feature", label: "C2"),
+        .init(orig: "嗯 今天那个 meeting 其实挺 good 的", clean: "今天 meeting 挺 good 的", label: "C3"),
+        .init(orig: "那个 Claude Code 的那个 prompt 写得挺清楚的", clean: "Claude Code 的 prompt 写得挺清楚的", label: "C4"),
+        .init(orig: "然后呢，就是说那个，我们其实可以考虑一下", clean: "我们可以考虑一下", label: "C5"),
+        .init(orig: "嗯啊哦", clean: "", label: "C6"),
+        .init(orig: "今天天气好", clean: "今天天气好", label: "C7"),
+    ]
+    var roundtripPass = 0
+    for c in cases {
+        let segs = diff(original: c.orig, cleaned: c.clean)
+        if concatOriginal(segs) == c.orig { roundtripPass += 1 }
+        else {
+            print("  FAIL C11 roundtrip \(c.label): got '\(concatOriginal(segs))'")
+            failures += 1
+        }
+    }
+    if roundtripPass == cases.count {
+        print("  PASS C11 roundtrip (\(roundtripPass)/\(cases.count))")
+    }
+}
+
+// C12 résumé / naïve — multi-accent tokens stay single runs.
+do {
+    let original = "I updated my résumé yesterday"
+    let segs = diff(original: original, cleaned: "I updated my résumé yesterday")
+    expect("C12 accented identical", removedWords(segs), [])
+    if concatOriginal(segs) != original {
+        print("  FAIL C12 reconstruction"); failures += 1
+    } else { print("  PASS C12 reconstruction") }
 }
 
 if failures == 0 {

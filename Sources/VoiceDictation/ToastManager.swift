@@ -36,12 +36,12 @@ final class ToastManager {
     // MARK: - Internals
 
     private final class ToastItem {
-        let panel: NSPanel
+        let panel: ToastPanel
         let vc: NSHostingController<ToastView>
         var timer: Timer?
         var dismissed = false
 
-        init(panel: NSPanel, vc: NSHostingController<ToastView>) {
+        init(panel: ToastPanel, vc: NSHostingController<ToastView>) {
             self.panel = panel
             self.vc = vc
         }
@@ -55,7 +55,7 @@ final class ToastManager {
 
         guard let screen = NSScreen.main else { return }
 
-        let panel = NSPanel(
+        let panel = ToastPanel(
             contentRect: NSRect(x: 0, y: 0, width: toastWidth, height: toastHeight),
             styleMask: [.nonactivatingPanel, .borderless],
             backing: .buffered,
@@ -97,8 +97,11 @@ final class ToastManager {
         item = ToastItem(panel: panel, vc: host)
         active.append(item)
 
-        // Position + animate-in
-        let targetFrame = frameForIndex(active.count - 1, screen: screen)
+        // Position + animate-in. Count only non-dismissed items so this new toast
+        // lands in the first visible slot (dismissed items stay in `active` until
+        // their fade-out animation completes).
+        let visibleIndex = active.filter { !$0.dismissed }.count - 1
+        let targetFrame = frameForIndex(max(0, visibleIndex), screen: screen)
         var startFrame = targetFrame
         startFrame.origin.x += 32  // slide in from right
         panel.setFrame(startFrame, display: false)
@@ -142,6 +145,12 @@ final class ToastManager {
         let finish: () -> Void = { [weak self, weak item] in
             guard let self = self, let item = item else { return }
             item.panel.orderOut(nil)
+            // Break the SwiftUI->closure->item retain cycle:
+            // view closures (onClose/onHoverChange) capture `item`, item keeps panel,
+            // panel keeps contentViewController, host keeps its view, view hosts SwiftUI
+            // tree that holds the closures. Severing the panel->vc/view edge drops it.
+            item.panel.contentViewController = nil
+            item.panel.contentView = nil
             self.active.removeAll { $0 === item }
             if let screen = NSScreen.main {
                 self.relayout(screen: screen)
@@ -174,13 +183,19 @@ final class ToastManager {
     }
 
     private func relayout(screen: NSScreen) {
-        for (idx, item) in active.enumerated() {
-            let target = frameForIndex(idx, screen: screen)
+        // Skip items currently fading out — otherwise we'd re-slot a dismissed
+        // panel to a new position while its dismiss animation is still running,
+        // producing a visible "jump a row then disappear" artefact.
+        var slot = 0
+        for item in active {
+            if item.dismissed { continue }
+            let target = frameForIndex(slot, screen: screen)
             NSAnimationContext.runAnimationGroup { ctx in
                 ctx.duration = 0.18
                 ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
                 item.panel.animator().setFrame(target, display: true)
             }
+            slot += 1
         }
     }
 }

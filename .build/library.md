@@ -108,3 +108,42 @@
 - Throw `missingAPIKey` (or similar) when `Config.apiKey == nil` so the normal
   error path in the pipeline (pill failure + system notification) surfaces the
   problem; don't crash.
+
+## Floating panel subclass for focus discipline (toast + pill)
+- ANY `NSPanel` whose content may receive mouse events must be a subclass that
+  overrides `canBecomeKey` and `canBecomeMain` to return `false`. A vanilla
+  `NSPanel(...)` with `.nonactivatingPanel` still promotes to key on interior
+  clicks, stealing focus from the user's front-most text field.
+- Mirror for `ToastPanel`: only `ignoresMouseEvents = true` would avoid the
+  need, but error toasts need hover/close → must be a subclass.
+
+## SwiftUI-in-NSHostingController retain cycle via captured closures
+- Pattern: outer class holds `item` that owns `NSPanel` → `contentViewController`
+  → `NSHostingController.view` → SwiftUI tree containing closures that captured
+  `item` (so the closures can dismiss / update hover state). This is a strong
+  cycle; `orderOut(nil)` is NOT sufficient to release — the hosting controller
+  and SwiftUI host stay alive.
+- Fix in dismiss's completion: set `panel.contentViewController = nil` and
+  `panel.contentView = nil` before dropping the item reference. That severs
+  the panel→hosting-controller edge and the whole chain collapses.
+- Rule of thumb: if your dismiss path keeps the panel around, it's fine; if
+  the panel should die, nil its content out first.
+
+## Toast relayout must skip in-flight dismissals
+- With a dismiss animation (0.14s), a toast about to disappear still lives in
+  `active` until the completion handler runs. If a new toast arrives inside
+  that window and triggers `relayout`, the fading panel's `animator().setFrame`
+  fights its own dismiss animation — visually reads as "jump a row then vanish".
+- Fix: iterate a `visible slot` counter in relayout that skips `dismissed == true`
+  items, and compute the incoming toast's frame with the same filter
+  (`active.filter { !$0.dismissed }.count - 1`).
+
+## Differ: case-insensitive LCS + extended Latin range
+- LCS comparison keys must be lowercased — LLM cleanup often re-capitalizes
+  proper nouns ("claude" → "Claude"); without lowercasing those are assumed
+  deleted (false positive). Display strings still come from the original-case
+  token list.
+- `isLatin` must cover Latin-1 Supplement + Extended-A/B (U+00C0–U+024F, minus
+  multiplication/division sign 0x00D7/0x00F7). Narrower ranges shred "café",
+  "résumé", "naïve" at the accented scalar, producing misaligned runs the LCS
+  can't match end-to-end.

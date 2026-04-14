@@ -223,9 +223,11 @@ final class DictationPipeline {
             )
             historyStore.addRecord(record)
 
+            // Toast is 320pt wide — filenames truncate to "…". The history list
+            // already surfaces the file, so just confirm persistence here.
             ToastManager.shared.show(
                 .error,
-                message: "\(message) · Audio saved: \(historyURL.lastPathComponent)"
+                message: "\(message) · Audio saved to history"
             )
         } else {
             ToastManager.shared.show(.error, message: message)
