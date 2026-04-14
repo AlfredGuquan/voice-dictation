@@ -2,6 +2,10 @@ metadata:
   feature: "f8-compare-view-diff"
   description: "历史对比视图用词粒度 diff 高亮被清洗掉的词"
   generated_at: "2026-04-14T00:00:00+08:00"
+  git_ref: "6de0cc7"
+  command: ".build/debug/VoiceDictation"
+  screenshot_dir: "/tmp/voice-v03-qa/f8-compare-view-diff"
+  qa_note: "QA 前关闭主 VoiceDictation 实例避免全局热键冲突 (pkill -f VoiceDictation)"
 
 stories:
   - name: "被清洗词用红色删除线标记"

@@ -2,6 +2,10 @@ metadata:
   feature: "f11-progress-bar-trickle"
   description: "进度条改为 Trickle 动画——快速填充后渐近到 ~95%，完成时跳 100%"
   generated_at: "2026-04-14T00:00:00+08:00"
+  git_ref: "6de0cc7"
+  command: ".build/debug/VoiceDictation"
+  screenshot_dir: "/tmp/voice-v03-qa/f11-progress-bar-trickle"
+  qa_note: "QA 前关闭主 VoiceDictation 实例避免全局热键冲突 (pkill -f VoiceDictation)"
 
 stories:
   - name: "处理态 fill 从左向右快速推进"
