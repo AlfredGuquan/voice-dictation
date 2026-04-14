@@ -29,8 +29,18 @@ enum Config {
             return decoded
         }
         set {
-            if let data = try? JSONEncoder().encode(newValue) {
+            do {
+                let data = try JSONEncoder().encode(newValue)
                 UserDefaults.standard.set(data, forKey: hotkeyDefaultsKey)
+            } catch {
+                // HotkeyType is a simple enum with Int64/UInt64 payloads;
+                // encoding should never fail. Surface it loudly in DEBUG
+                // so a future schema change can't silently drop the
+                // user's hotkey.
+                print("[Config] Failed to encode hotkey \(newValue): \(error)")
+                #if DEBUG
+                assertionFailure("Config.hotkey encode failed: \(error)")
+                #endif
             }
         }
     }
@@ -40,4 +50,10 @@ enum Config {
 /// DictationPipeline listens and calls HotkeyManager.reload(to:).
 extension Notification.Name {
     static let hotkeyConfigChanged = Notification.Name("voice-dictation.hotkeyConfigChanged")
+    /// Posted by the Settings hotkey recorder when it enters recording mode.
+    /// DictationPipeline forwards to HotkeyManager.beginCapture() so the
+    /// global CGEventTap stops swallowing events during recording.
+    static let hotkeyCaptureBegin = Notification.Name("voice-dictation.hotkeyCaptureBegin")
+    /// Posted when the Settings hotkey recorder exits recording mode.
+    static let hotkeyCaptureEnd = Notification.Name("voice-dictation.hotkeyCaptureEnd")
 }

@@ -1,5 +1,6 @@
 import Cocoa
 import Carbon.HIToolbox
+import os
 
 /// Configurable global hotkey via CGEvent tap.
 ///
@@ -97,15 +98,37 @@ final class HotkeyManager {
     /// Set to true when recording is active — Esc is only intercepted during recording.
     var isActive = false
 
-    private(set) var currentHotkey: HotkeyType
+    /// Thread-safe accessor for the active hotkey. Reads/writes are serialized
+    /// via `stateLock` so the CGEvent tap callback (non-main thread) can't see
+    /// a torn enum value mid-`reload(to:)`.
+    var currentHotkey: HotkeyType {
+        os_unfair_lock_lock(stateLock)
+        defer { os_unfair_lock_unlock(stateLock) }
+        return _currentHotkey
+    }
 
     init(hotkey: HotkeyType = .singleModifier(keyCode: 61)) {
-        self.currentHotkey = hotkey
+        self._currentHotkey = hotkey
+    }
+
+    deinit {
+        stateLock.deinitialize(count: 1)
+        stateLock.deallocate()
     }
 
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
+    private var _currentHotkey: HotkeyType
     private var isModifierDown = false
+    /// True while Settings is recording a new hotkey; tap lets events pass
+    /// through without dispatching or consuming so the local NSEvent monitor
+    /// in SettingsView can capture them.
+    private var isCapturing = false
+    private let stateLock: os_unfair_lock_t = {
+        let lock = UnsafeMutablePointer<os_unfair_lock>.allocate(capacity: 1)
+        lock.initialize(to: os_unfair_lock())
+        return lock
+    }()
 
     func start() -> Bool {
         let eventMask: CGEventMask = (1 << CGEventType.flagsChanged.rawValue)
@@ -143,23 +166,51 @@ final class HotkeyManager {
         }
         eventTap = nil
         runLoopSource = nil
+        os_unfair_lock_lock(stateLock)
         isModifierDown = false
+        os_unfair_lock_unlock(stateLock)
     }
 
-    /// Swap the active hotkey at runtime. Must be called on main thread.
+    /// Swap the active hotkey at runtime. Safe to call from any thread;
+    /// internally serialized via `stateLock` so the CGEvent tap callback
+    /// can't read a half-written enum.
     ///
     /// Safety: the event tap is NOT recreated — it still masks
     /// flagsChanged|keyDown which covers both modes. Only the dispatch
-    /// target (currentHotkey) is replaced, atomically in the main
-    /// thread, while the callback also dispatches to main. `isModifierDown`
-    /// is reset so a stale "key is down" flag from the old single-modifier
-    /// binding can't leak into the new binding.
+    /// target (`_currentHotkey`) is replaced. `isModifierDown` is reset so a
+    /// stale "key is down" flag from the old single-modifier binding can't
+    /// leak into the new binding.
     func reload(to newHotkey: HotkeyType) {
-        assert(Thread.isMainThread, "HotkeyManager.reload must be called on main thread")
-        guard newHotkey != currentHotkey else { return }
-        isModifierDown = false
-        currentHotkey = newHotkey
+        os_unfair_lock_lock(stateLock)
+        let same = (newHotkey == _currentHotkey)
+        if !same {
+            isModifierDown = false
+            _currentHotkey = newHotkey
+        }
+        os_unfair_lock_unlock(stateLock)
+        guard !same else { return }
         print("[HotkeyManager] reloaded to \(newHotkey.displayName)")
+    }
+
+    /// Mark the tap as "capturing" — for the duration, the global tap stops
+    /// dispatching and stops consuming events, so Settings' local NSEvent
+    /// monitor can capture the next keystroke. Safe from any thread.
+    func beginCapture() {
+        os_unfair_lock_lock(stateLock)
+        isCapturing = true
+        // Drop any stale "modifier is down" flag from before capture started,
+        // so the release event we swallow during capture doesn't leave the
+        // pipeline in a stuck state when capture ends.
+        isModifierDown = false
+        os_unfair_lock_unlock(stateLock)
+    }
+
+    /// End capture mode. After this call the tap resumes normal dispatch.
+    func endCapture() {
+        os_unfair_lock_lock(stateLock)
+        isCapturing = false
+        isModifierDown = false
+        os_unfair_lock_unlock(stateLock)
     }
 
     // MARK: - Event dispatch
@@ -177,6 +228,22 @@ final class HotkeyManager {
             return Unmanaged.passUnretained(event)
         }
 
+        // Snapshot shared state under the lock — callbacks run on a tap thread
+        // while main thread may be inside reload(to:) / beginCapture().
+        os_unfair_lock_lock(stateLock)
+        let capturing = isCapturing
+        let snapshotHotkey = _currentHotkey
+        let snapshotModifierDown = isModifierDown
+        os_unfair_lock_unlock(stateLock)
+
+        // While Settings is capturing, pass everything through without
+        // dispatching or swallowing. The local NSEvent monitor in SettingsView
+        // runs in the app process and will receive the keystroke once it
+        // reaches the frontmost window's event queue.
+        if capturing {
+            return Unmanaged.passUnretained(event)
+        }
+
         let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
 
         // Esc (keyCode 53) — cancel only while recording; otherwise pass through
@@ -190,35 +257,36 @@ final class HotkeyManager {
         let modifierMask: CGEventFlags = [.maskCommand, .maskShift, .maskAlternate, .maskControl]
         let pressedModifiers = event.flags.intersection(modifierMask)
 
-        switch currentHotkey {
+        switch snapshotHotkey {
         case .singleModifier(let target):
             guard type == .flagsChanged, keyCode == target else {
                 return Unmanaged.passUnretained(event)
             }
             let targetFlag = Self.modifierFlag(forSingleModifierKeyCode: target)
-            // When the modifier is held alone, intersection equals its own flag.
-            // For modifier-less keys (CapsLock=57, Fn=63) targetFlag == [], so
-            // the "held" state must be derived differently.
             let isNowDown: Bool
             if targetFlag == [] {
                 // CapsLock / Fn — no modifier flag to check. Fall back to
                 // flipping isModifierDown each flagsChanged event for this
                 // keyCode (CapsLock / Fn emit one flagsChanged per toggle).
-                isNowDown = !isModifierDown
+                isNowDown = !snapshotModifierDown
             } else {
                 isNowDown = (pressedModifiers == targetFlag)
             }
 
             if isNowDown {
-                if !isModifierDown {
+                if !snapshotModifierDown {
+                    os_unfair_lock_lock(stateLock)
                     isModifierDown = true
+                    os_unfair_lock_unlock(stateLock)
                     DispatchQueue.main.async { [weak self] in
                         self?.onEvent?(.singleModifierDown)
                     }
                 }
             } else {
-                if isModifierDown {
+                if snapshotModifierDown {
+                    os_unfair_lock_lock(stateLock)
                     isModifierDown = false
+                    os_unfair_lock_unlock(stateLock)
                     DispatchQueue.main.async { [weak self] in
                         self?.onEvent?(.singleModifierUp)
                     }

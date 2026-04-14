@@ -80,6 +80,21 @@ final class DictationPipeline {
             name: .hotkeyConfigChanged,
             object: nil
         )
+        // Capture bridge: while Settings is recording a new hotkey, tell the
+        // global CGEvent tap to pass events through so the local NSEvent
+        // monitor in SettingsView can receive them.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(hotkeyCaptureBegin),
+            name: .hotkeyCaptureBegin,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(hotkeyCaptureEnd),
+            name: .hotkeyCaptureEnd,
+            object: nil
+        )
 
         print("[Pipeline] Ready. Press \(hotkeyManager.currentHotkey.displayName) to dictate.")
     }
@@ -93,6 +108,20 @@ final class DictationPipeline {
             handleCancel()
         }
         hotkeyManager.reload(to: Config.hotkey)
+    }
+
+    @objc private func hotkeyCaptureBegin() {
+        // If the user starts recording a new hotkey mid-dictation, cancel
+        // the in-flight recording so we don't strand `hotkeyManager.isActive`
+        // and leak UI state.
+        if state == .recording {
+            handleCancel()
+        }
+        hotkeyManager.beginCapture()
+    }
+
+    @objc private func hotkeyCaptureEnd() {
+        hotkeyManager.endCapture()
     }
 
     // MARK: - Event handlers

@@ -207,3 +207,52 @@
   isn't Codable. Convert at the edge: `CGEventFlags(rawValue: ...)`.
 - UserDefaults persistence: `JSONEncoder().encode(hotkey)` → Data → setData.
   Read the other way. 4-line get/set in Config.swift.
+
+## Chord recording state machine: commit-on-release not commit-on-press (F9)
+- Naive design "commit on first flagsChanged with a modifier flag set"
+  breaks chord recording: pressing Cmd alone triggers flagsChanged with
+  `pressed == {maskCommand}` which immediately commits `singleModifier(Cmd)`;
+  the user never gets to press Space.
+- Fix: track `pendingModifierKeyCode` + `sawKeyDownDuringHold`. First lone
+  modifier press sets `pendingModifierKeyCode` and waits. keyDown with
+  modifiers → commit chord. All-release (`pressed.isEmpty`) with pending
+  and no keyDown observed → commit single-modifier. CapsLock/Fn still
+  commit on first flagsChanged (no modifier bit to disambiguate press vs
+  release). Full implementation in `SettingsView.swift` HotkeyRecorderControl.
+
+## Global CGEventTap must passthrough during hotkey recording (F9 Blocker)
+- A CGEventTap at `.cgSessionEventTap` runs in HID layer BEFORE any
+  per-window NSEvent monitor. Default-tap returning `nil` consumes the
+  event system-wide → Settings' local NSEvent monitor never sees it.
+- Add `beginCapture()` / `endCapture()` on the manager setting an
+  `isCapturing` flag (guarded by `os_unfair_lock` since the callback
+  thread is not main). When set, callback first thing: return
+  `Unmanaged.passUnretained(event)` — pass through, no dispatch, no consume.
+- Wire it via `Notification.Name.hotkeyCaptureBegin` / `.hotkeyCaptureEnd`
+  so the Settings view doesn't need a direct reference to the pipeline's
+  HotkeyManager instance.
+- Also reset `isModifierDown` at both begin and end: a stale "held" flag
+  from before capture would otherwise fire a spurious `.singleModifierUp`
+  to the pipeline once the user finishes recording.
+
+## os_unfair_lock in Swift (CGEventTap callback + main-thread writers)
+- `os_unfair_lock_t` is an `UnsafeMutablePointer<os_unfair_lock>`. Allocate
+  in a stored property initializer (`UnsafeMutablePointer.allocate(capacity:1)`
+  then `initialize(to: os_unfair_lock())`) and free in `deinit` with
+  `deinitialize(count:1)` + `deallocate()`. Do NOT use
+  `withUnsafeMutablePointer(to: &storedStruct)` — Swift struct addresses
+  aren't stable across accesses.
+- Pattern for reading Codable enum fields across threads: wrap read/write
+  of the stored `_state` in `os_unfair_lock_lock/unlock`, snapshot the
+  value into a local while holding the lock, use the snapshot after release.
+  Enums with 2+ word payloads (like `HotkeyType.chord(Int64, UInt64)`) can
+  otherwise tear on the reader side.
+
+## Persistent conflict state is orthogonal to "just saved" flash
+- Original design collapsed conflict-indicator into `Phase.justSaved`, so
+  the warning color disappeared 1.2s after save even though the hotkey
+  was still conflicting. Reviewers will flag this.
+- Keep `Phase` strictly about transient flashing (idle/recording/justSaved)
+  and derive `hasConflict: Bool` from `conflictHint != nil && phase != .recording`.
+  Then each visual token (foreground / background / border) first checks
+  `hasConflict` and only falls through to phase-based colors when clean.
