@@ -207,6 +207,9 @@ final class DictationPipeline {
     private func handleError(_ message: String, audioURL: URL) {
         print("[Pipeline] Error: \(message)")
         state = .idle
+        // Freeze the trickle in place so it doesn't keep creeping toward 95%
+        // during the pill's fade-out (would visually read as success).
+        pillVC?.freezeProgressAnimation()
         hidePill()
 
         let duration = recordingStartTime.map { Date().timeIntervalSince($0) } ?? 0

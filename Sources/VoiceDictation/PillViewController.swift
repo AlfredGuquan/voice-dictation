@@ -49,8 +49,8 @@ final class PillViewController: NSViewController {
         case completing
     }
 
-    // Colors — Warm Glass theme (v0.3: bg alpha 0.82 -> 0.92)
-    private let bgColor = NSColor(red: 1.0, green: 0.99, blue: 0.98, alpha: 0.92)
+    // Colors — Warm Glass theme (v0.3 spec: rgb 255,252,247 / alpha 0.92)
+    private let bgColor = NSColor(red: 255.0/255.0, green: 252.0/255.0, blue: 247.0/255.0, alpha: 0.92)
     private let accentColor = NSColor(red: 217/255, green: 119/255, blue: 87/255, alpha: 1.0)  // #D97757
     private let accentHoverColor = NSColor(red: 196/255, green: 101/255, blue: 58/255, alpha: 1.0)  // #C4653A
     private let confirmColor = NSColor(red: 93/255, green: 140/255, blue: 90/255, alpha: 1.0)  // #5D8C5A
@@ -206,7 +206,6 @@ final class PillViewController: NSViewController {
         progressFill.wantsLayer = true
         progressFill.layer?.cornerRadius = trackHeight / 2
         progressFill.layer?.backgroundColor = accentColor.cgColor
-        progressFill.layer?.anchorPoint = CGPoint(x: 0, y: 0.5)
         progressTrack.addSubview(progressFill)
     }
 
@@ -309,10 +308,11 @@ final class PillViewController: NSViewController {
     //   1. 0   → 70%  over 500ms  (ease-out)
     //   2. 70% → 95%  over 2500ms (slower asymptote)
     //   3. 95% → 100% over 200ms  (linear) on ASR completion
-    // Invariant: fill width never decreases. Re-entry via `startProgressAnimation()`
-    // is a no-op if already running; a full reset requires explicit `resetProgress()`.
+    // Invariant: fill width never decreases. `startProgressAnimation()` is idempotent
+    // while a phase is in flight; full reset goes through `stopProgressAnimation()`.
 
     private func startProgressAnimation() {
+        guard progressPhase == .idle else { return }
         resetProgress()
         progressPhase = .stageOne
         progressFill.alphaValue = 1
@@ -345,6 +345,26 @@ final class PillViewController: NSViewController {
         }
     }
 
+    /// Halt the trickle in place — keep the current fill width, drop pending phases.
+    /// Used on error / cancel paths so the bar doesn't keep creeping toward 95% while
+    /// the pill fades out (which would visually read as "succeeding").
+    func freezeProgressAnimation() {
+        guard progressPhase != .idle else { return }
+        progressPhase = .idle
+        // Snap to the in-flight rendered width before removing the animation;
+        // otherwise CA reverts to the model value (the phase target).
+        let renderedWidth = progressFill.layer?.presentation()?.bounds.width
+            ?? progressFill.frame.width
+        progressFill.layer?.removeAllAnimations()
+        progressFill.frame = NSRect(
+            x: 0, y: 0,
+            width: renderedWidth,
+            height: progressTrack.bounds.height
+        )
+        let trackWidth = progressTrack.bounds.width
+        progressCurrent = trackWidth > 0 ? renderedWidth / trackWidth : 0
+    }
+
     private func stopProgressAnimation() {
         // Cancel any in-flight chained animation and reset fill to 0 without animation.
         progressPhase = .idle
@@ -364,6 +384,7 @@ final class PillViewController: NSViewController {
     /// Animate fill ratio toward `target` (clamped, monotonic). Completion is called
     /// with `finished = true` only if the animation reached its target without being
     /// cancelled (phase changed or view torn down).
+    // Assumes pill size is fixed; if pill becomes resizable, re-read trackWidth on each phase transition.
     private func animateFill(
         to target: CGFloat,
         duration: CFTimeInterval,
@@ -431,11 +452,15 @@ final class PillViewController: NSViewController {
             path.lineWidth = 1.8
             path.lineCapStyle = .round
             self.cancelColor.setStroke()
-            let inset: CGFloat = 12
-            path.move(to: NSPoint(x: inset, y: inset))
-            path.line(to: NSPoint(x: size - inset, y: size - inset))
-            path.move(to: NSPoint(x: size - inset, y: inset))
-            path.line(to: NSPoint(x: inset, y: size - inset))
+            // Map X onto the same 16×16 viewBox the checkmark uses, so the two
+            // glyphs keep matching visual weight as buttonSize scales.
+            // Endpoints 4,4 → 12,12 and 12,4 → 4,12 give a ~11px stroke at size=16,
+            // visually matching the checkmark's 12.5−3.5 = 9 horizontal span.
+            let scale = size / 16
+            path.move(to: NSPoint(x: 4 * scale, y: 4 * scale))
+            path.line(to: NSPoint(x: 12 * scale, y: 12 * scale))
+            path.move(to: NSPoint(x: 12 * scale, y: 4 * scale))
+            path.line(to: NSPoint(x: 4 * scale, y: 12 * scale))
             path.stroke()
             return true
         }
