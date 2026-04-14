@@ -1,0 +1,37 @@
+metadata:
+  feature: "f5-runtime-toast"
+  description: "运行时错误通知改为 app 内 toast；启动期错误保留系统通知"
+  generated_at: "2026-04-14T00:00:00+08:00"
+
+stories:
+  - name: "录音启动失败显示 app 内 toast"
+    acceptance_criteria:
+      - "人为阻断录音启动路径（如麦克风被占用）后按下听写热键，屏幕上出现 app 内 toast 显示 'Failed to start recording' 类文案"
+      - "期间不出现 macOS 通知中心条目"
+
+  - name: "Pipeline 失败含音频存档显示 toast"
+    acceptance_criteria:
+      - "人为注入 pipeline 异常（如模拟网络失败），录音结束后屏幕出现 toast，内容含错误信息且提示音频已存档路径"
+      - "期间不出现 macOS 通知中心条目"
+      - "历史记录中能找到对应的音频文件"
+
+  - name: "Pipeline 失败无音频情况显示 toast"
+    acceptance_criteria:
+      - "触发不带音频存档的 pipeline 失败分支，屏幕出现 toast 显示错误信息"
+      - "期间不出现 macOS 通知中心条目"
+
+  - name: "无焦点时复制到剪贴板显示 toast"
+    acceptance_criteria:
+      - "将前台切到无可编辑文本框的 app（如 Finder）后按热键完成听写，屏幕浮现 toast 显示 '已复制到剪贴板'"
+      - "toast 在前台为非本 app 时仍可见（floating panel）"
+      - "剪贴板内容为清洗后文字"
+
+  - name: "启动期缺 API Key 保留系统通知"
+    acceptance_criteria:
+      - "清空环境中 OPENAI_API_KEY 后启动 app，macOS 通知中心出现 'OPENAI_API_KEY not found' 条目"
+      - "不使用 app 内 toast 显示该错误"
+
+  - name: "启动期辅助功能权限缺失保留系统通知"
+    acceptance_criteria:
+      - "撤销 app 的辅助功能权限后重启，macOS 通知中心出现 'Accessibility permission required' 条目"
+      - "不使用 app 内 toast 显示该错误"

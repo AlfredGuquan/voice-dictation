@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice Dictation — Design v0.3 Final</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep:      #F5F0E8;
+    --bg-base:      #FAF7F2;
+    --bg-surface:   #F0EBE3;
+    --bg-card:      #FFFFFF;
+    --bg-card-hover:#FBF9F6;
+    --bg-pill-warm: rgba(255, 252, 247, 0.92);
+    --bg-input:     #FFFFFF;
+    --bg-sidebar:   #F0EBE3;
+
+    --text-primary:   #1A1A1A;
+    --text-secondary: #6B6560;
+    --text-tertiary:  #9C958C;
+    --text-accent:    #C4653A;
+
+    --accent:         #D97757;
+    --accent-hover:   #C4653A;
+    --accent-glow:    rgba(217, 119, 87, 0.12);
+    --accent-subtle:  rgba(217, 119, 87, 0.07);
+
+    --confirm:        #5D8C5A;
+    --confirm-bg:     rgba(93, 140, 90, 0.10);
+    --confirm-text:   #3D6B3A;
+    --cancel:         #C4653A;
+    --cancel-bg:      rgba(196, 101, 58, 0.08);
+    --diff-removed:   rgba(196, 101, 58, 0.18);
+
+    --warn:           #B8862E;
+    --warn-bg:        rgba(184, 134, 46, 0.10);
+
+    --border:         #E8E0D4;
+    --border-focus:   rgba(217, 119, 87, 0.4);
+
+    --radius-sm:   6px;
+    --radius-md:   10px;
+    --radius-lg:   16px;
+    --radius-pill: 999px;
+
+    --shadow-pill-soft: 0 6px 20px rgba(60, 40, 25, 0.10), 0 1px 2px rgba(60, 40, 25, 0.04);
+    --shadow-toast:     0 8px 28px rgba(60, 40, 25, 0.14), 0 1px 2px rgba(60, 40, 25, 0.06);
+
+    --font-sans:  'DM Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    --font-mono:  'DM Mono', 'SF Mono', 'Fira Code', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(217, 119, 87, 0.03) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(196, 101, 58, 0.02) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page-header {
+    text-align: center;
+    padding: 80px 40px 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .page-header::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 500px; height: 300px;
+    background: radial-gradient(ellipse at center, rgba(217, 119, 87, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .page-header h1 {
+    font-size: 44px;
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+
+  .page-header p {
+    font-size: 16px;
+    color: var(--text-secondary);
+    max-width: 640px;
+    margin: 0 auto;
+    line-height: 1.8;
+  }
+
+  .page-header .badge {
+    display: inline-block;
+    padding: 5px 16px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-subtle);
+    color: var(--text-accent);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(217, 119, 87, 0.15);
+  }
+
+  .section {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 64px 40px;
+    border-top: 1px solid var(--border);
+    position: relative;
+    z-index: 1;
+  }
+
+  .section-header { margin-bottom: 32px; }
+
+  .section-number {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-accent);
+    margin-bottom: 8px;
+    font-family: var(--font-mono);
+  }
+
+  .section-title {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.8px;
+    margin-bottom: 8px;
+  }
+
+  .section-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    max-width: 720px;
+  }
+
+  .section-desc code,
+  .design-note code,
+  .spec-grid code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 1px 6px;
+    background: var(--bg-surface);
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .design-note {
+    margin-top: 24px;
+    padding: 16px 20px;
+    background: var(--accent-subtle);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+  }
+
+  .design-note strong { color: var(--text-accent); font-weight: 600; }
+
+  .stage {
+    position: relative;
+    padding: 48px 24px;
+    background: linear-gradient(135deg, #E9DFD0 0%, #DCCFBA 100%);
+    border-radius: var(--radius-md);
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+  }
+
+  .stage.screen {
+    min-height: 280px;
+    padding: 0;
+    align-items: flex-start;
+    overflow: hidden;
+  }
+
+  .spec-grid {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 8px 20px;
+    padding: 14px 18px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    margin-top: 20px;
+    line-height: 1.8;
+  }
+
+  .spec-grid .k { color: var(--text-accent); }
+
+  /* ============================================
+     01 · PILL (B: 232×40, radius 22, warm glass)
+     ============================================ */
+  .pill {
+    width: 232px;
+    height: 40px;
+    padding: 0 5px;
+    border-radius: 22px;
+    background: var(--bg-pill-warm);
+    backdrop-filter: blur(24px) saturate(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    box-shadow: var(--shadow-pill-soft);
+    border: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .pill-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
+    background: transparent;
+  }
+
+  .pill-btn svg { width: 13px; height: 13px; }
+  .pill-btn:hover { transform: scale(1.08); }
+
+  .pill-btn.cancel { background: var(--cancel-bg); color: var(--cancel); }
+  .pill-btn.confirm { background: var(--confirm-bg); color: var(--confirm); }
+  .pill-btn.processing {
+    background: var(--accent-subtle);
+    color: var(--accent);
+    position: relative;
+  }
+
+  .pill-btn .spinner-ring {
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .waveform {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5px;
+    flex: 1;
+    height: 100%;
+    padding: 0 10px;
+  }
+
+  .waveform .bar {
+    width: 2.5px;
+    border-radius: 2px;
+    background: var(--accent);
+    animation: wave 1.2s ease-in-out infinite;
+    opacity: 0.85;
+  }
+
+  .waveform .bar:nth-child(1)  { height: 6px;  animation-delay: 0s; }
+  .waveform .bar:nth-child(2)  { height: 12px; animation-delay: 0.08s; }
+  .waveform .bar:nth-child(3)  { height: 18px; animation-delay: 0.14s; }
+  .waveform .bar:nth-child(4)  { height: 24px; animation-delay: 0.2s; }
+  .waveform .bar:nth-child(5)  { height: 16px; animation-delay: 0.28s; }
+  .waveform .bar:nth-child(6)  { height: 22px; animation-delay: 0.34s; }
+  .waveform .bar:nth-child(7)  { height: 14px; animation-delay: 0.4s; }
+  .waveform .bar:nth-child(8)  { height: 20px; animation-delay: 0.46s; }
+  .waveform .bar:nth-child(9)  { height: 10px; animation-delay: 0.52s; }
+  .waveform .bar:nth-child(10) { height: 16px; animation-delay: 0.58s; }
+
+  @keyframes wave {
+    0%, 100% { transform: scaleY(0.4); opacity: 0.5; }
+    50%      { transform: scaleY(1);   opacity: 0.95; }
+  }
+
+  .progress-area {
+    flex: 1;
+    padding: 0 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 3px;
+  }
+
+  .progress-label {
+    font-size: 9.5px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.4px;
+    text-align: center;
+    font-family: var(--font-mono);
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 2.5px;
+    background: rgba(0,0,0,0.07);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+    width: 0%;
+  }
+
+  .pill-caption {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    letter-spacing: 0.5px;
+    text-align: center;
+    margin-top: 12px;
+  }
+
+  .pill-pair {
+    display: flex;
+    gap: 64px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .pill-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ============================================
+     02 · TOAST — top-right strip only
+     ============================================ */
+  .desktop-sim {
+    width: 100%;
+    height: 280px;
+    background:
+      radial-gradient(ellipse at 30% 30%, rgba(217, 119, 87, 0.08), transparent 50%),
+      linear-gradient(135deg, #E9DFD0, #D6C9B2);
+    position: relative;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .desktop-menubar {
+    height: 22px;
+    background: rgba(250, 247, 242, 0.78);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    gap: 14px;
+    font-size: 11px;
+    color: rgba(0,0,0,0.65);
+    font-weight: 500;
+  }
+
+  .desktop-menubar .spacer { flex: 1; }
+  .desktop-menubar .right {
+    font-family: var(--font-mono);
+    font-size: 10px;
+  }
+
+  .fake-window {
+    position: absolute;
+    top: 52px;
+    left: 40px;
+    width: 280px;
+    height: 180px;
+    background: var(--bg-card);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    overflow: hidden;
+  }
+
+  .fake-window .tl {
+    height: 28px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+  }
+
+  .fake-window .tl .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .fake-window .tl .dot.r { background: #ff5f57; }
+  .fake-window .tl .dot.y { background: #febc2e; }
+  .fake-window .tl .dot.g { background: #28c840; }
+
+  .fake-window .body {
+    padding: 16px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    line-height: 1.6;
+  }
+
+  .toast-slot {
+    position: absolute;
+    top: 36px;
+    right: 16px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+  }
+
+  .toast-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px 7px 12px;
+    background: rgba(40, 30, 22, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: var(--radius-pill);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    font-size: 11.5px;
+    color: rgba(255,253,250,0.95);
+    max-width: 280px;
+  }
+
+  .toast-strip .icon { width: 12px; height: 12px; flex-shrink: 0; }
+  .toast-strip.error .icon { color: #F4A88B; }
+  .toast-strip.info .icon { color: #F0C78E; }
+
+  .toast-strip .close {
+    margin-left: 4px;
+    width: 12px;
+    height: 12px;
+    background: none;
+    border: none;
+    color: rgba(255,253,250,0.6);
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .toast-strip .close:hover { color: rgba(255,253,250,0.95); }
+
+  .toast-caption {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    letter-spacing: 0.4px;
+  }
+
+  /* ============================================
+     03 · DIFF (B: bg 0.18 + bold strike)
+     ============================================ */
+  .diff-card {
+    padding: 24px 28px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    line-height: 2.1;
+    color: var(--text-primary);
+  }
+
+  .diff-card .raw-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .diff-card .removed {
+    color: var(--cancel);
+    text-decoration: line-through;
+    text-decoration-thickness: 1.8px;
+    background: var(--diff-removed);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+
+  /* ============================================
+     04 · HOTKEY — Xcode-style (A)
+     ============================================ */
+  .settings-card {
+    padding: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .settings-row:last-child { border-bottom: none; }
+
+  .settings-row .label {
+    flex: 0 0 160px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-align: right;
+  }
+
+  .settings-row .label .hint {
+    display: block;
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+    font-family: var(--font-mono);
+  }
+
+  .settings-row .control {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .hotkey-field {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    height: 28px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.15s;
+    min-width: 140px;
+    font-family: var(--font-mono);
+  }
+
+  .hotkey-field:hover { border-color: #D5CCC0; }
+
+  .hotkey-field.recording {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+    color: var(--text-accent);
+    animation: pulse-border 1.4s ease-in-out infinite;
+  }
+
+  .hotkey-field.saved {
+    border-color: var(--confirm);
+    box-shadow: 0 0 0 3px var(--confirm-bg);
+  }
+
+  .hotkey-field.conflict {
+    border-color: var(--warn);
+    box-shadow: 0 0 0 3px var(--warn-bg);
+  }
+
+  .hotkey-field .clear {
+    margin-left: auto;
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .hotkey-field .clear:hover { background: rgba(0,0,0,0.06); color: var(--text-secondary); }
+
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 0 3px var(--accent-glow); }
+    50%      { box-shadow: 0 0 0 6px var(--accent-glow); }
+  }
+
+  .kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 4px;
+    background: rgba(0,0,0,0.04);
+    border: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .hint-line {
+    font-size: 11.5px;
+    color: var(--text-tertiary);
+    line-height: 1.5;
+  }
+
+  .hint-line.warn { color: var(--warn); }
+  .hint-line.ok { color: var(--confirm-text); }
+
+  .hint-line .dot {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    background: currentColor;
+  }
+
+  .state-caption {
+    flex: 0 0 140px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  /* ============================================
+     05 · TRICKLE (C1)
+     ============================================ */
+  .trickle-card {
+    padding: 28px 24px 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+  }
+
+  .trickle-pill {
+    width: 232px;
+    height: 40px;
+    padding: 0 5px;
+    border-radius: 22px;
+    background: var(--bg-pill-warm);
+    backdrop-filter: blur(24px) saturate(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    box-shadow: var(--shadow-pill-soft);
+    border: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 auto 20px;
+  }
+
+  .trickle-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .trickle-btn {
+    padding: 7px 16px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .trickle-btn:hover {
+    border-color: var(--border-focus);
+    color: var(--text-accent);
+    background: var(--accent-subtle);
+  }
+
+  .curve-svg {
+    width: 100%;
+    height: 140px;
+    background: var(--bg-base);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    margin-top: 8px;
+  }
+
+  @media (max-width: 860px) {
+    .pill-pair { gap: 32px; }
+    .settings-row { flex-direction: column; align-items: flex-start; }
+    .settings-row .label { flex: none; text-align: left; }
+    .state-caption { flex: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="badge">DESIGN v0.3 · FINAL</div>
+  <h1>Voice Dictation — 打磨批次</h1>
+  <p>用户已裁决的单一实现方案。5 个决策点逐个给出 ready-to-ship 规格，作为实现团队的执行契约。</p>
+</div>
+
+<!-- ========================================
+     01 · PILL
+     ======================================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-number">01 · Pill</div>
+    <div class="section-title">浮动药丸 — 232×40，圆角 22，暖色毛玻璃</div>
+    <div class="section-desc">
+      用户选 <strong>方案 B</strong>。相比 v0.2（280×48）缩小 17% × 17%；半径 22px 让两端保持圆润但不是纯胶囊感。
+      按钮缩到 30×30，仍保留取消/确认操作。深色变体废弃，只保留暖色毛玻璃。
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="pill-pair">
+      <div class="pill-block">
+        <div class="pill">
+          <button class="pill-btn cancel">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>
+          </button>
+          <div class="waveform">
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          </div>
+          <button class="pill-btn confirm">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3.5 8.5 6.5 11.5 12.5 4.5"/></svg>
+          </button>
+        </div>
+        <div class="pill-caption">Recording — 0:03</div>
+      </div>
+
+      <div class="pill-block">
+        <div class="pill">
+          <button class="pill-btn cancel">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>
+          </button>
+          <div class="progress-area">
+            <div class="progress-label">Transcribing</div>
+            <div class="progress-track"><div class="progress-fill loop"></div></div>
+          </div>
+          <button class="pill-btn processing"><div class="spinner-ring"></div></button>
+        </div>
+        <div class="pill-caption">Processing</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spec-grid">
+    <span class="k">size</span>             <span>232 × 40 px</span>
+    <span class="k">radius</span>           <span>22px（非完全胶囊，high &gt; 2·radius）</span>
+    <span class="k">background</span>       <span>rgba(255, 252, 247, 0.92) + backdrop-blur(24px) saturate(1.2)</span>
+    <span class="k">border</span>           <span>1px rgba(0,0,0,0.05)</span>
+    <span class="k">shadow</span>           <span>0 6px 20px rgba(60,40,25,0.10), 0 1px 2px rgba(60,40,25,0.04)</span>
+    <span class="k">padding</span>          <span>0 5px</span>
+    <span class="k">button</span>           <span>30 × 30 px · radius 50% · icon 13×13</span>
+    <span class="k">cancel btn</span>       <span>bg rgba(196,101,58,0.08) · color #C4653A</span>
+    <span class="k">confirm btn</span>      <span>bg rgba(93,140,90,0.10) · color #5D8C5A</span>
+    <span class="k">waveform</span>         <span>10 bars · width 2.5px · gap 2.5px · color #D97757 · animation wave 1.2s</span>
+    <span class="k">progress track</span>   <span>height 2.5px · bg rgba(0,0,0,0.07)</span>
+    <span class="k">progress fill</span>    <span>linear-gradient(90deg, #D97757, #C4653A)</span>
+  </div>
+
+  <div class="design-note">
+    <strong>F6 依赖：</strong>方案不用 <code>border</code>，只用 <code>box-shadow</code> 描边 + backdrop-blur 分隔。
+    如果 tracer 确认 NSPanel 的方框虚线是不可规避的产物，实现时要把 panel 的 <code>hasShadow=false</code>，再在内部 contentView 绘制圆角矩形 + 阴影。
+  </div>
+</div>
+
+<!-- ========================================
+     02 · TOAST
+     ======================================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-number">02 · Toast (F5)</div>
+    <div class="section-title">Toast — 右上灯条，仅错误/fallback 提示</div>
+    <div class="section-desc">
+      替代系统通知。<strong>不展示成功态</strong>：直接注入焦点框时用户能看到文字出现，不需要冗余反馈。
+      Toast 只在异常路径触发：<code>错误</code>（3s，悬停暂停，可 ✕）、<code>剪贴板 fallback</code>（2s）、<code>权限缺失</code>（持续直到用户处理）。
+    </div>
+  </div>
+
+  <div class="stage screen">
+    <div class="desktop-sim">
+      <div class="desktop-menubar">
+        <span></span>
+        <span>Xcode</span>
+        <span>File</span>
+        <span>Edit</span>
+        <span class="spacer"></span>
+        <span class="right">14:32</span>
+      </div>
+      <div class="fake-window">
+        <div class="tl">
+          <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        </div>
+        <div class="body">用户此刻正在编辑器里工作，焦点不在 Voice Dictation 上…</div>
+      </div>
+      <div class="toast-slot">
+        <div class="toast-strip error">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="8" r="6.2"/><line x1="8" y1="5" x2="8" y2="8.6"/><circle cx="8" cy="11" r="0.8" fill="currentColor"/></svg>
+          <span>网络错误 — 已保留录音</span>
+          <button class="close">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="3" x2="9" y2="9"/><line x1="9" y1="3" x2="3" y2="9"/></svg>
+          </button>
+        </div>
+        <div class="toast-strip info">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="4" y="4" width="8" height="9" rx="1.2"/><path d="M6 4V2.5h4V4"/></svg>
+          <span>无焦点 — 已复制到剪贴板</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="toast-caption">向下堆叠 · 最多 3 条 · 超出的排队</div>
+
+  <div class="spec-grid">
+    <span class="k">位置</span>               <span>屏幕右上，距顶 36px，距右 16px（留出 menubar 空间）</span>
+    <span class="k">堆叠</span>               <span>纵向向下 · 间距 6px · 上限 3 条 · 溢出排队等空位</span>
+    <span class="k">样式</span>               <span>深色胶囊灯条 · 单行文本</span>
+    <span class="k">background</span>         <span>rgba(40, 30, 22, 0.92) + backdrop-blur(12px)</span>
+    <span class="k">shadow</span>             <span>0 4px 14px rgba(0,0,0,0.18)</span>
+    <span class="k">radius</span>             <span>999px（胶囊）</span>
+    <span class="k">padding</span>            <span>7px 14px 7px 12px</span>
+    <span class="k">font</span>               <span>DM Sans 11.5px · color rgba(255,253,250,0.95)</span>
+    <span class="k">icon</span>               <span>12×12 · error #F4A88B · info #F0C78E</span>
+    <span class="k">close btn</span>          <span>仅错误 toast 显示 · rgba(255,253,250,0.6) → 0.95 on hover</span>
+    <span class="k">时长 · error</span>       <span>3s auto-dismiss · 悬停暂停倒计时 · 点 ✕ 立即关</span>
+    <span class="k">时长 · fallback</span>    <span>2s auto-dismiss · 不可关闭（瞬态提示）</span>
+    <span class="k">时长 · permission</span>  <span>持续显示直到用户点击打开设置 · 带动作按钮</span>
+    <span class="k">动画 · enter</span>       <span>slide-in-right 180ms · cubic-bezier(.2,.8,.3,1)</span>
+    <span class="k">动画 · exit</span>        <span>fade + slide-right 140ms · ease-in</span>
+  </div>
+
+  <div class="design-note">
+    <strong>触发清单：</strong>
+    <br>1. 网络/API 错误 → error toast · 3s
+    <br>2. 剪贴板 fallback（无焦点、CJK 编码失败）→ info toast · 2s
+    <br>3. 麦克风/辅助功能/输入监控权限缺失 → persistent toast · 带"打开设置"按钮
+    <br>4. 录音时长超限、磁盘满等异常 → error toast · 3s
+    <br><br>
+    <strong>成功路径不吐司。</strong>
+  </div>
+</div>
+
+<!-- ========================================
+     03 · DIFF
+     ======================================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-number">03 · Diff (F8)</div>
+    <div class="section-title">对比视图 — 加深背景 + 粗删除线</div>
+    <div class="section-desc">
+      用户选 <strong>方案 B</strong>。<code>--diff-removed</code> token 从 0.10 加深到 0.18，删除线加粗到 1.8px，字重 500。
+      只标删除，不标新增。
+    </div>
+  </div>
+
+  <div class="diff-card">
+    <span class="raw-label">原文 · Diff rendering</span>
+    嗨，我觉得这个方案<span class="removed">其实</span>挺好的，<span class="removed">就是</span>那个预算<span class="removed">有点</span>紧。
+  </div>
+
+  <div class="spec-grid">
+    <span class="k">token</span>       <span><code>--diff-removed: rgba(196, 101, 58, 0.18);</code></span>
+    <span class="k">color</span>       <span>var(--cancel) — #C4653A</span>
+    <span class="k">strike</span>      <span>line-through · thickness 1.8px</span>
+    <span class="k">weight</span>      <span>500</span>
+    <span class="k">padding</span>     <span>1px 4px</span>
+    <span class="k">radius</span>      <span>3px</span>
+    <span class="k">line-height</span> <span>2.1 (让删除块之间不粘连)</span>
+  </div>
+</div>
+
+<!-- ========================================
+     04 · HOTKEY
+     ======================================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-number">04 · Hotkey (F9)</div>
+    <div class="section-title">快捷键录制 — Xcode 风紧凑控件</div>
+    <div class="section-desc">
+      用户选 <strong>方案 A</strong>。行内控件，28px 高，符合 macOS 原生 form 密度。
+      四个状态：默认 / 录制中 / 已保存 / 冲突警告。冲突时黄色提示但允许保存。
+    </div>
+  </div>
+
+  <div class="settings-card">
+    <div class="settings-row">
+      <span class="label">
+        触发快捷键
+        <span class="hint">Global Hotkey</span>
+      </span>
+      <div class="control">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span class="state-caption">Default</span>
+          <div class="hotkey-field">
+            <span class="kbd">right&nbsp;⌥</span>
+            <span class="clear">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="5" y1="5" x2="11" y2="11"/><line x1="11" y1="5" x2="5" y2="11"/></svg>
+            </span>
+          </div>
+          <span class="hint-line">点击重新录制</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-row">
+      <span class="label">&nbsp;</span>
+      <div class="control">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span class="state-caption">Recording</span>
+          <div class="hotkey-field recording">
+            <span style="color: var(--text-accent);">请按下要录制的键…</span>
+          </div>
+          <span class="hint-line" style="color: var(--text-accent);">
+            <span class="dot"></span>按 Esc 取消
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-row">
+      <span class="label">&nbsp;</span>
+      <div class="control">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span class="state-caption">Saved</span>
+          <div class="hotkey-field saved">
+            <span class="kbd">⌃</span><span class="kbd">Space</span>
+            <span class="clear">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="5" y1="5" x2="11" y2="11"/><line x1="11" y1="5" x2="5" y2="11"/></svg>
+            </span>
+          </div>
+          <span class="hint-line ok"><span class="dot"></span>已保存</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-row">
+      <span class="label">&nbsp;</span>
+      <div class="control">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span class="state-caption">Conflict</span>
+          <div class="hotkey-field conflict">
+            <span class="kbd">⌘</span><span class="kbd">Space</span>
+            <span class="clear">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="5" y1="5" x2="11" y2="11"/><line x1="11" y1="5" x2="5" y2="11"/></svg>
+            </span>
+          </div>
+          <span class="hint-line warn">
+            <span class="dot"></span>与系统 Spotlight 冲突 — 本应用将优先响应
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spec-grid">
+    <span class="k">height</span>       <span>28px</span>
+    <span class="k">padding</span>      <span>4px 8px</span>
+    <span class="k">min-width</span>    <span>140px</span>
+    <span class="k">radius</span>       <span>6px</span>
+    <span class="k">font</span>         <span>DM Mono 12px</span>
+    <span class="k">kbd chip</span>     <span>18px 高 · 4px radius · bg rgba(0,0,0,0.04) · border var(--border)</span>
+    <span class="k">default</span>      <span>border var(--border) · hover #D5CCC0</span>
+    <span class="k">recording</span>    <span>border var(--accent) · glow 3-6px pulse 1.4s · 文字 var(--text-accent)</span>
+    <span class="k">saved</span>        <span>border var(--confirm) · glow 3px var(--confirm-bg) · 静态 1.2s 后回落 default</span>
+    <span class="k">conflict</span>     <span>border var(--warn) · glow 3px var(--warn-bg) · 文案"本应用将优先响应"</span>
+    <span class="k">clear icon</span>   <span>14×14 · hover bg rgba(0,0,0,0.06) · 清空后回 default 态</span>
+    <span class="k">Esc 键</span>      <span>录制中按 Esc → 取消，不修改已保存值</span>
+  </div>
+
+  <div class="design-note">
+    <strong>单修饰键支持：</strong>控件需能识别"右 Option 单按"等单修饰键（当前默认值）；组合键捕获到 modifier + keycode；
+    冲突判定对"单修饰键"放宽（因为 macOS 本身没占用单 right-⌥）。
+  </div>
+</div>
+
+<!-- ========================================
+     05 · TRICKLE
+     ======================================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-number">05 · Progress Trickle (F11)</div>
+    <div class="section-title">进度条 — C1 温和曲线（500/2500ms）</div>
+    <div class="section-desc">
+      用户选 <strong>曲线 C1</strong>。阶段 1：0→70% 用 500ms ease-out；阶段 2：70→95% 用 2500ms 渐近；完成 95→100% 用 200ms linear。
+      点按钮模拟真实 ASR 时长体验。
+    </div>
+  </div>
+
+  <div class="trickle-card">
+    <div class="trickle-pill">
+      <button class="pill-btn cancel">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>
+      </button>
+      <div class="progress-area">
+        <div class="progress-label">Transcribing</div>
+        <div class="progress-track">
+          <div class="progress-fill" id="trickle-fill"></div>
+        </div>
+      </div>
+      <button class="pill-btn processing"><div class="spinner-ring"></div></button>
+    </div>
+
+    <div class="trickle-controls">
+      <button class="trickle-btn" onclick="playTrickle(800)">短 · 0.8s</button>
+      <button class="trickle-btn" onclick="playTrickle(2000)">中 · 2.0s</button>
+      <button class="trickle-btn" onclick="playTrickle(6000)">长 · 6.0s</button>
+      <button class="trickle-btn" onclick="resetTrickle()">重置</button>
+    </div>
+
+    <svg class="curve-svg" viewBox="0 0 300 140" preserveAspectRatio="none">
+      <rect x="0" y="0" width="300" height="140" fill="transparent"/>
+      <line x1="0" y1="42" x2="300" y2="42" stroke="rgba(0,0,0,0.05)"/>
+      <line x1="0" y1="70" x2="300" y2="70" stroke="rgba(0,0,0,0.05)"/>
+      <text x="4" y="46" font-family="DM Mono" font-size="8" fill="var(--text-tertiary)">95%</text>
+      <text x="4" y="74" font-family="DM Mono" font-size="8" fill="var(--text-tertiary)">70%</text>
+      <text x="4" y="135" font-family="DM Mono" font-size="8" fill="var(--text-tertiary)">0%</text>
+      <path d="M 0,140 C 20,140 40,70 100,42 C 160,28 220,14 300,8"
+            fill="none" stroke="var(--accent)" stroke-width="2"/>
+      <line x1="100" y1="0" x2="100" y2="140" stroke="rgba(217,119,87,0.2)" stroke-dasharray="3,3"/>
+      <text x="104" y="132" font-family="DM Mono" font-size="8" fill="var(--text-accent)">0.5s 阶段 1 结束</text>
+    </svg>
+  </div>
+
+  <div class="spec-grid">
+    <span class="k">阶段 1</span>       <span>0 → 70% · 500ms · <code>cubic-bezier(.25, .9, .35, 1)</code></span>
+    <span class="k">阶段 2</span>       <span>70 → 95% · 2500ms · <code>cubic-bezier(.3, .7, .4, 1)</code></span>
+    <span class="k">完成</span>         <span>95 → 100% · 200ms · linear · 隐藏 pill（淡出 200ms）</span>
+    <span class="k">ASR &lt; 500ms</span>  <span>阶段 1 未结束 → 直接跳 100%（不等补完 70%）</span>
+    <span class="k">ASR 500ms–3s</span>  <span>阶段 1 补完后进入阶段 2，ASR 完成时跳 100%</span>
+    <span class="k">ASR &gt; 3s</span>    <span>阶段 2 渐近到 95% 停住，完成时跳 100%</span>
+    <span class="k">不回退</span>       <span>fill 只向右，任何状态切换都不允许 width 减小</span>
+    <span class="k">取消</span>         <span>用户按 ✕ → fill 淡出 140ms（不跳 100%）</span>
+  </div>
+
+  <div class="design-note">
+    <strong>实现提示：</strong>用 CSS transition + JS 驱动 <code>width</code> 变化。阶段切换用 <code>setTimeout</code>，
+    状态机严格保证 width 单调递增（即使触发多次 <code>start()</code>）。
+    <code>pill</code> 消失时同步停止动画，避免 fill 撞到 100% 后还继续动。
+  </div>
+</div>
+
+<script>
+function playTrickle(asrMs) {
+  const fill = document.getElementById('trickle-fill');
+  fill.style.transition = 'none';
+  fill.style.width = '0%';
+  void fill.offsetWidth;
+
+  const p1 = 500, p2 = 2500, done = 200;
+  fill.style.transition = `width ${p1}ms cubic-bezier(.25,.9,.35,1)`;
+  fill.style.width = '70%';
+
+  setTimeout(() => {
+    fill.style.transition = `width ${p2}ms cubic-bezier(.3,.7,.4,1)`;
+    fill.style.width = '95%';
+  }, p1);
+
+  setTimeout(() => {
+    fill.style.transition = `width ${done}ms linear`;
+    fill.style.width = '100%';
+  }, Math.max(asrMs, p1 + 50));
+}
+
+function resetTrickle() {
+  const fill = document.getElementById('trickle-fill');
+  fill.style.transition = 'none';
+  fill.style.width = '0%';
+}
+
+// Loop the section 1 progress demo
+document.querySelectorAll('.progress-fill.loop').forEach(el => {
+  let forward = true;
+  function step() {
+    el.style.transition = 'width 1800ms cubic-bezier(.35,.8,.4,1)';
+    el.style.width = forward ? '82%' : '12%';
+    forward = !forward;
+    setTimeout(step, 1900);
+  }
+  el.style.width = '12%';
+  setTimeout(step, 300);
+});
+</script>
+
+</body>
+</html>

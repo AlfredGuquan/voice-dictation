@@ -1,0 +1,42 @@
+metadata:
+  feature: "f13-provider-abstraction"
+  description: "ASRProvider / LLMProvider 抽象 + WhisperKit 本地 + 新 LLM 接入"
+  generated_at: "2026-04-14T00:00:00+08:00"
+
+stories:
+  - name: "默认组合延迟达标 <3s"
+    acceptance_criteria:
+      - "配置为默认组合（WhisperKit + GPT-4.1-mini），VPN 已开启的网络环境下连续跑 5 次 5-10s 听写"
+      - "每次全链路耗时（录音结束到文字注入完成）< 3s"
+      - "5 次中至少 3 次 < 2s"
+
+  - name: "设置页可切换 ASR Provider"
+    acceptance_criteria:
+      - "打开主窗口 Settings Tab，ASR Provider 下拉菜单包含 WhisperKit / whisper-1 / ElevenLabs Scribe v2 / OpenAI gpt-4.1-mini-transcribe / OpenAI gpt-4o-mini-transcribe（或当前接入的 5 个候选）"
+      - "选中任一项并保存，下次听写使用新 Provider"
+
+  - name: "设置页可切换 LLM Provider"
+    acceptance_criteria:
+      - "Settings Tab 的 LLM Provider 下拉包含 GPT-4.1-mini / GPT-4o-mini / Gemini 2.5 Flash 至少这三项"
+      - "切换到 Gemini 并保存后，下次听写的 LLM 清洗阶段实际调用 Gemini API（可通过日志或历史 modelConfig 字段验证）"
+
+  - name: "Provider 切换无需重启生效"
+    acceptance_criteria:
+      - "在 Settings 切换 Provider 并保存，不退出 app"
+      - "立即按热键执行听写，使用新 Provider 完成转录注入"
+
+  - name: "WhisperKit 首次下载有进度条且不阻塞"
+    acceptance_criteria:
+      - "首次启用 WhisperKit 时 UI 显示模型下载进度条（百分比或数据量）"
+      - "下载进行中按热键听写仍能完成（走 whisper-1 fallback）"
+      - "下载完成后再次听写使用 WhisperKit 本地推理"
+
+  - name: "缺 API Key 的 Provider 灰掉"
+    acceptance_criteria:
+      - "确保 GEMINI_API_KEY 未配置，打开 Settings Tab"
+      - "LLM Provider 下拉中 Gemini 2.5 Flash 选项灰掉不可选，hover 或旁边有文字提示'缺少 GEMINI_API_KEY'"
+
+  - name: "历史记录保存 modelConfig 字段"
+    acceptance_criteria:
+      - "切换到 WhisperKit + Gemini 2.5 Flash 配置执行一次听写"
+      - "对应历史记录的 modelConfig 字段记录为 asr=WhisperKit, llm=Gemini-2.5-Flash（或等价字符串标识）"

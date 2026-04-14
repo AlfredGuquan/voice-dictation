@@ -1,0 +1,28 @@
+metadata:
+  feature: "f8-compare-view-diff"
+  description: "历史对比视图用词粒度 diff 高亮被清洗掉的词"
+  generated_at: "2026-04-14T00:00:00+08:00"
+
+stories:
+  - name: "被清洗词用红色删除线标记"
+    acceptance_criteria:
+      - "打开一条含填充词的历史记录对比视图，原文中被清洗掉的词（如'嗯'、'那个'、'其实'）以红色删除线显示"
+      - "未被清洗的词保持原色无装饰"
+
+  - name: "清洗后文本无标记"
+    acceptance_criteria:
+      - "清洗后文本侧展示为纯文本，无任何颜色高亮或删除线"
+      - "不出现绿色或其它颜色的新增标记"
+
+  - name: "词粒度整块标记"
+    acceptance_criteria:
+      - "连续多词被删（如'就是那个'）时，整段作为一组删除标记显示，不被切成零散字符"
+
+  - name: "中英混合文本分词"
+    acceptance_criteria:
+      - "原文包含中英混合句（如'嗯 今天那个 meeting 其实挺 good 的'）时，英文词按空格切分、中文按词边界切分，删除线准确覆盖被清洗的词"
+
+  - name: "视觉样式对齐 mockup"
+    acceptance_criteria:
+      - "删除线颜色与 mockup.html 中 --diff-removed 变量一致"
+      - "删除线粗细和位置与设计稿一致"

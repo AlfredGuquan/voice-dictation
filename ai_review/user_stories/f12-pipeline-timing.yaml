@@ -1,0 +1,25 @@
+metadata:
+  feature: "f12-pipeline-timing"
+  description: "DictationPipeline 阶段耗时打点与历史界面展示"
+  generated_at: "2026-04-14T00:00:00+08:00"
+
+stories:
+  - name: "新历史记录包含四段耗时字段"
+    acceptance_criteria:
+      - "按热键说一句话完成一次听写后，最新的 HistoryStore 记录包含 audioPrepMs / asrMs / llmMs / injectMs 四个数值字段"
+      - "四个字段都是非负整数，单位毫秒"
+
+  - name: "历史列表展开能看到四段耗时和总和"
+    acceptance_criteria:
+      - "打开主窗口历史 Tab，点击某条新记录展开，UI 展示四段耗时（音频准备 / ASR / LLM / 注入）和它们的总和"
+      - "耗时数值以 ms 为单位显示，可辨识到个位"
+
+  - name: "旧历史条目缺耗时字段时 UI 显示占位符"
+    acceptance_criteria:
+      - "打开 F4 阶段产生的旧历史条目（没有耗时字段），展开后耗时位置显示 '—' 或等价占位"
+      - "打开旧条目不崩溃、不抛异常、不出现空白卡片"
+
+  - name: "连续听写 10 次后各段耗时可人工检视"
+    acceptance_criteria:
+      - "连续进行 10 次听写，每次都记录完整耗时"
+      - "历史列表展开 10 条记录后，能看到每条的 asrMs 和 llmMs 数值有明显差异（反映真实耗时而非硬编码）"

@@ -87,3 +87,14 @@ Commit 用 conventional commits。Branch 命名 `feat/xxx`、`fix/xxx`。
 - `ignoresMouseEvents = true` 让 toast 非交互，不干扰用户当前操作
 - 多 toast 堆叠：单例 Manager + maxStack=4 + 超出淘汰最老（见 specs/tracer/v03-findings.md F5）
 </important>
+
+<important if="implementing diff / tokenization for history comparison">
+- 不用 Apple `NLTokenizer(.word)`——对中文切词位置敏感不稳定（"对对对" 会被切成 ["对","对对"]，LCS 无法匹配）
+- 用自写 Unicode scalar 切分：CJK 按字、Latin/digit 按连续 run。30 行无依赖（见 specs/tracer/v03-findings-code.md F8）
+- 视觉上的"词粒度"由 LCS 后的连续段合并实现，不需要在切分阶段聚合词
+</important>
+
+<important if="adding hot-reload for config-driven services (api key, provider config, etc.)">
+- 不在 service 里缓存 key——每次构建请求时从 `Config` 读，避免 Settings 保存后的同步问题
+- WhisperService / LLMCleanupService 不持 `apiKey` 字段，`DictationPipeline.start()` 去掉启动期一次性注入（见 specs/tracer/v03-findings-code.md F10）
+</important>
