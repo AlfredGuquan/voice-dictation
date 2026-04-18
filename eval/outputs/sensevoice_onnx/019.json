@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "019",
+  "text": "帮我查一下 CLOUD AI 的 RATE LIMIT 是多少顺便看一下 PROMPT CACHINE 的文档",
+  "latency_ms": 1596.3897919282317,
+  "audio_sec": 5.061333333333334,
+  "rtf": 0.31540894203007735,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

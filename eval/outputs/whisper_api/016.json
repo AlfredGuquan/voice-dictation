@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "016",
+  "text": "声音快起来的时候要识别的准 这对模型来说是个挑战",
+  "latency_ms": 1728.9419160224497,
+  "audio_sec": 3.7386666666666666,
+  "rtf": 0.46244880064794486,
+  "raw": {
+    "language": "zh"
+  }
+}

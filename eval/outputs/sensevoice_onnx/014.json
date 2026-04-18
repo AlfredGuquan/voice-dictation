@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "014",
+  "text": "刚刚那个就是说你之前提到那个问题我想再确认一下",
+  "latency_ms": 1607.9727089963853,
+  "audio_sec": 4.192,
+  "rtf": 0.3835812760010461,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

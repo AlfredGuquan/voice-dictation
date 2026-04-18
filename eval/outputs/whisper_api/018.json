@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "018",
+  "text": "这个function里面有个raise condition,你review一下",
+  "latency_ms": 1882.3460000567138,
+  "audio_sec": 3.2106666666666666,
+  "rtf": 0.58627886214391,
+  "raw": {
+    "language": "zh"
+  }
+}

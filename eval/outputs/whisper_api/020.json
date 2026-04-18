@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "020",
+  "text": "我刚才push commit里有个tipo 麻烦revert一下或者直接amend",
+  "latency_ms": 1391.8036250397563,
+  "audio_sec": 4.8213333333333335,
+  "rtf": 0.2886760837333565,
+  "raw": {
+    "language": "zh"
+  }
+}

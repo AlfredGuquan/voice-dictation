@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "002",
+  "text": "这个bug我晚点修。",
+  "latency_ms": 4715.969334123656,
+  "audio_sec": 1.7813333333333334,
+  "rtf": 2.647437874695166,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>这个bug我晚点修。"
+  }
+}

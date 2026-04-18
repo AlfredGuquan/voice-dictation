@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "012",
+  "text": "我覺得這個方案不太行 因為延遲還是太高 用戶體驗不好",
+  "latency_ms": 789.9360829032958,
+  "audio_sec": 3.525333333333333,
+  "rtf": 0.22407415362234184,
+  "raw": {
+    "language": "zh"
+  }
+}

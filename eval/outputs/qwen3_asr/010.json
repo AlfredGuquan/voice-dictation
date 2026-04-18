@@ -1,0 +1,12 @@
+{
+  "engine": "qwen3_asr_mlx",
+  "model": "Qwen/Qwen3-ASR-0.6B",
+  "wav_id": "010",
+  "text": "Show me the differ for this file.",
+  "latency_ms": 46869.4262499921,
+  "audio_sec": 2.0853333333333333,
+  "rtf": 22.475747882029463,
+  "raw": {
+    "language_input": null
+  }
+}

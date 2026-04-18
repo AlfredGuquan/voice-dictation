@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "027",
+  "text": "Apple Silicon的AME跑Core ML模型會比GPU快嗎?",
+  "latency_ms": 1225.3241669386625,
+  "audio_sec": 5.333333333333333,
+  "rtf": 0.22974828130099922,
+  "raw": {
+    "language": "zh"
+  }
+}

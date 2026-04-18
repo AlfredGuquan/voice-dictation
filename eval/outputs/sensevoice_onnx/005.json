@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "005",
+  "text": "把这个 COMMITE 推到 MAN分值",
+  "latency_ms": 717.8832909557968,
+  "audio_sec": 2.2986666666666666,
+  "rtf": 0.31230421590304386,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

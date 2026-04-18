@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "031",
+  "text": "我想做一个语音输入法的EVA框架 先用OpenAI Whisper作为baseline 然后对比Sense, Waze和Kubernetes 3SR这两个本地模型 主要看CER和端到端Latency",
+  "latency_ms": 1693.3765409048647,
+  "audio_sec": 12.256,
+  "rtf": 0.1381671459615588,
+  "raw": {
+    "language": "zh"
+  }
+}

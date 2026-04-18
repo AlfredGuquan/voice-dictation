@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "007",
+  "text": "用pmpm install 装一来",
+  "latency_ms": 919.0447498112917,
+  "audio_sec": 2.848,
+  "rtf": 0.32269829698430186,
+  "raw": {
+    "language": "zh"
+  }
+}

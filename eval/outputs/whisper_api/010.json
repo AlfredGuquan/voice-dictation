@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "010",
+  "text": "Show me the differ for this file",
+  "latency_ms": 1256.116084055975,
+  "audio_sec": 2.0853333333333333,
+  "rtf": 0.6023574571879676,
+  "raw": {
+    "language": "zh"
+  }
+}

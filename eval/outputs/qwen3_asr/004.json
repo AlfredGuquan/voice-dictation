@@ -1,0 +1,12 @@
+{
+  "engine": "qwen3_asr_mlx",
+  "model": "Qwen/Qwen3-ASR-0.6B",
+  "wav_id": "004",
+  "text": "麻烦你把会议纪要发我一份。",
+  "latency_ms": 69500.840166118,
+  "audio_sec": 2.08,
+  "rtf": 33.413865464479805,
+  "raw": {
+    "language_input": null
+  }
+}

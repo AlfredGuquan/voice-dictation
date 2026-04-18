@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "029",
+  "text": "PING UP A TEST OVER ON PO THRE TOUSAND AND CU THE HEALTH ENDPOINT",
+  "latency_ms": 1876.4684998895973,
+  "audio_sec": 6.874666666666666,
+  "rtf": 0.2729541068497281,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

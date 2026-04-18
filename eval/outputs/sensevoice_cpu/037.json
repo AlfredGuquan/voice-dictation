@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "037",
+  "text": "我刚才在tusciite里看到history表有一个edited text字段。按理说应该是用户编辑后的文本，但我在本地全部都是空的stateatus都是not extracted，估计是服务端回填的逻辑没触发。",
+  "latency_ms": 11749.921042006463,
+  "audio_sec": 15.957333333333333,
+  "rtf": 0.7363336214492686,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>我刚才在tusciite里看到history表有一个edited text字段。按理说应该是用户编辑后的文本，但我在本地全部都是空的stateatus都是not extracted，估计是服务端回填的逻辑没触发。"
+  }
+}

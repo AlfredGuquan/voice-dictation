@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "033",
+  "text": "这个项目的架构是这样的 前端用Swift UI 中间有个Pipeline负责协调录音 ASR LLM清洗和文本注入 后端的ASR和LLM都是通过HTTP调用云端服务的",
+  "latency_ms": 1263.7213750276715,
+  "audio_sec": 12.234666666666667,
+  "rtf": 0.10329021700858255,
+  "raw": {
+    "language": "zh"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "023",
+  "text": "把音频从48k赫兹当sample到16k赫兹再喂给模型",
+  "latency_ms": 1233.3067909348756,
+  "audio_sec": 6.165333333333334,
+  "rtf": 0.20003894749159962,
+  "raw": {
+    "language": "zh"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "026",
+  "text": "那个async function没有await,导致promise被swallow了",
+  "latency_ms": 989.5571249071509,
+  "audio_sec": 5.1946666666666665,
+  "rtf": 0.19049482640666407,
+  "raw": {
+    "language": "zh"
+  }
+}

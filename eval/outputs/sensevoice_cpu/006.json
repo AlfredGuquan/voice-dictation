@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "006",
+  "text": "打开科s重启一下。",
+  "latency_ms": 4580.503250006586,
+  "audio_sec": 1.952,
+  "rtf": 2.3465692879132103,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>打开科s重启一下。"
+  }
+}

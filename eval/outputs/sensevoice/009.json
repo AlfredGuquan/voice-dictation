@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "009",
+  "text": "Return the tests, and push it.",
+  "latency_ms": 5308.150500059128,
+  "audio_sec": 2.2453333333333334,
+  "rtf": 2.364081279717545,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|en|><|EMO_UNKNOWN|><|Speech|><|withitn|>Return the tests, and push it."
+  }
+}

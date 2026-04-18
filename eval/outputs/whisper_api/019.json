@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "019",
+  "text": "帮我查一下Cloud API的Rate Limit是多少 顺便看一下Prompt Caching的文档",
+  "latency_ms": 2159.281208179891,
+  "audio_sec": 5.061333333333334,
+  "rtf": 0.42662299950867183,
+  "raw": {
+    "language": "zh"
+  }
+}

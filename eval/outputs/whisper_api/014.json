@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "014",
+  "text": "刚刚那个就是说你之前提到的那个问题我想再确认一下",
+  "latency_ms": 610.8056670054793,
+  "audio_sec": 4.192,
+  "rtf": 0.14570745873222313,
+  "raw": {
+    "language": "zh"
+  }
+}

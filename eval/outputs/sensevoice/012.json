@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "012",
+  "text": "我觉得这个方案不太行，因为延迟还是太高，用户体验不好。",
+  "latency_ms": 4285.527125000954,
+  "audio_sec": 3.525333333333333,
+  "rtf": 1.2156374219934627,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>我觉得这个方案不太行，因为延迟还是太高，用户体验不好。"
+  }
+}

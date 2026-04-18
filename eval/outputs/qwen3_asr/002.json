@@ -1,0 +1,12 @@
+{
+  "engine": "qwen3_asr_mlx",
+  "model": "Qwen/Qwen3-ASR-0.6B",
+  "wav_id": "002",
+  "text": "这个 bug 我晚点修。",
+  "latency_ms": 66030.8555001393,
+  "audio_sec": 1.7813333333333334,
+  "rtf": 37.06821977926981,
+  "raw": {
+    "language_input": null
+  }
+}

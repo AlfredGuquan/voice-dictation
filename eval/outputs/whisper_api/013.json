@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "013",
+  "text": "等一下,我先把刚才的思路整理一下,然后再告诉你接下来该怎么做。",
+  "latency_ms": 969.1189578734338,
+  "audio_sec": 4.229333333333333,
+  "rtf": 0.229142250442962,
+  "raw": {
+    "language": "zh"
+  }
+}

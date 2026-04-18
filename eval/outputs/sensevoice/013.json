@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "013",
+  "text": "等一下，我先把刚才思路整理一下，然后再告诉你接下来该怎么做。",
+  "latency_ms": 4556.099375011399,
+  "audio_sec": 4.229333333333333,
+  "rtf": 1.077261832048723,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>等一下，我先把刚才思路整理一下，然后再告诉你接下来该怎么做。"
+  }
+}

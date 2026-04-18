@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "031",
+  "text": "我想作一个语音输入法的一V框架先用 OPEN AI WHISPER 作为 BASELINE 然后对比 SENSE W 和 Q三 S R 这两个本地模型主要看 C R 和端到端 L LATENCY",
+  "latency_ms": 6081.684667151421,
+  "audio_sec": 12.256,
+  "rtf": 0.4962210074372896,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

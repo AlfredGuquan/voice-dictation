@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "003",
+  "text": "嗯，那个我想想再说。",
+  "latency_ms": 7463.905125157908,
+  "audio_sec": 2.7253333333333334,
+  "rtf": 2.738712741618606,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>嗯，那个我想想再说。"
+  }
+}

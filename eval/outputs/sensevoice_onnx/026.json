@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "026",
+  "text": "那个 AIN FUNCTION 没有 AWIGT 导致 PROMISE 了被 SWELLOW 了",
+  "latency_ms": 1126.6567499842495,
+  "audio_sec": 5.1946666666666665,
+  "rtf": 0.21688720803084885,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

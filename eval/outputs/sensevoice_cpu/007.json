@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "007",
+  "text": "用PMPMinsstore装依赖。",
+  "latency_ms": 3236.0193328931928,
+  "audio_sec": 2.848,
+  "rtf": 1.1362427432911493,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>用PMPMinsstore装依赖。"
+  }
+}

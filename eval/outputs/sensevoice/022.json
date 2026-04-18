@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "022",
+  "text": "在 package dot Jasonson里加一个 script叫de Bo指向 T S X watch S RRC main dot T S.",
+  "latency_ms": 4617.7870410028845,
+  "audio_sec": 8.336,
+  "rtf": 0.5539571786231867,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|en|><|NEUTRAL|><|Speech|><|withitn|>在 package dot Jasonson里加一个 script叫de Bo指向 T S X watch S RRC main dot T S."
+  }
+}

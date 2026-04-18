@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "028",
+  "text": "这个bug我觉得跟react18的scriptmode有关 双重调用导致的",
+  "latency_ms": 2245.1837498228997,
+  "audio_sec": 5.610666666666667,
+  "rtf": 0.4001634535093096,
+  "raw": {
+    "language": "zh"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "011",
+  "text": "明天上午十点有一个会麻烦帮我提醒一下内容大概是讨论 Q 二的规划",
+  "latency_ms": 2531.4184580929577,
+  "audio_sec": 5.754666666666667,
+  "rtf": 0.43988967645266874,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

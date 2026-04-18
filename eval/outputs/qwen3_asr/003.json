@@ -1,0 +1,12 @@
+{
+  "engine": "qwen3_asr_mlx",
+  "model": "Qwen/Qwen3-ASR-0.6B",
+  "wav_id": "003",
+  "text": "嗯，那个，我想想再说。",
+  "latency_ms": 55862.985416082665,
+  "audio_sec": 2.7253333333333334,
+  "rtf": 20.497670774002934,
+  "raw": {
+    "language_input": null
+  }
+}

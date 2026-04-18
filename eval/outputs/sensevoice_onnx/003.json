@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "003",
+  "text": "嗯那个我想想再说",
+  "latency_ms": 659.1662920545787,
+  "audio_sec": 2.7253333333333334,
+  "rtf": 0.24186630090065264,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "026",
+  "text": "那个Aing function没有 await导致被 swallow。",
+  "latency_ms": 8471.366791054606,
+  "audio_sec": 5.1946666666666665,
+  "rtf": 1.6307815947872062,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>那个Aing function没有 await导致被 swallow。"
+  }
+}

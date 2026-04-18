@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "006",
+  "text": "打开歌S重启一下",
+  "latency_ms": 669.0689998213202,
+  "audio_sec": 1.952,
+  "rtf": 0.3427607581051845,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

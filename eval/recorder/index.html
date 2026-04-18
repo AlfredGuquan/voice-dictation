@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>Voice Dictation · Recorder</title>
+  <style>
+    :root {
+      --bg: #1a1a1a;
+      --fg: #e8e6e3;
+      --muted: #8a857f;
+      --accent: #d4915e;
+      --accent-dim: #7a5334;
+      --danger: #c96464;
+      --border: #2e2b28;
+      --surface: #232120;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .frame {
+      width: 100%;
+      max-width: 720px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      color: var(--muted);
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+    .progress-bar {
+      flex: 1;
+      margin: 0 16px;
+      height: 2px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-bar > div {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.3s;
+    }
+    .meta {
+      display: inline-flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .tag {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      background: var(--border);
+      border-radius: 4px;
+      padding: 3px 8px;
+    }
+    .tag.recorded { background: var(--accent-dim); color: var(--fg); }
+    .script {
+      font-size: 22px;
+      line-height: 1.6;
+      min-height: 140px;
+      padding: 20px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+      white-space: pre-wrap;
+    }
+    .record {
+      width: 100%;
+      padding: 28px;
+      background: transparent;
+      color: var(--fg);
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .record:hover { border-color: var(--muted); }
+    .record.recording {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: #fff;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.75; }
+    }
+    .timer {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 8px;
+      font-variant-numeric: tabular-nums;
+      min-height: 18px;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    button {
+      flex: 1;
+      padding: 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--fg);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    button:hover:not(:disabled) { border-color: var(--muted); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #1a1a1a;
+    }
+    button.primary:hover:not(:disabled) {
+      background: #e4a26e;
+    }
+    .playback {
+      width: 100%;
+      margin-top: 12px;
+    }
+    .hint {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 24px;
+    }
+    .hint kbd {
+      background: var(--border);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+      margin: 0 2px;
+    }
+    .done {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .done h1 { font-weight: 300; margin-bottom: 8px; }
+    .done p { color: var(--muted); margin: 4px 0; }
+  </style>
+</head>
+<body>
+<div class="frame" id="app">
+  <div class="header">
+    <span id="counter">0 / 0</span>
+    <div class="progress-bar"><div id="progress" style="width:0"></div></div>
+    <span id="id-tag">—</span>
+  </div>
+  <div class="meta">
+    <span class="tag" id="tag-lang">—</span>
+    <span class="tag" id="tag-bucket">—</span>
+    <span class="tag" id="tag-scene">—</span>
+    <span class="tag recorded" id="tag-recorded" style="display:none">已录</span>
+  </div>
+  <div class="script" id="script">Loading…</div>
+
+  <button class="record" id="record">按住 空格 或 点击并保持 录音</button>
+  <div class="timer" id="timer"></div>
+
+  <audio class="playback" id="playback" controls style="display:none"></audio>
+
+  <div class="actions">
+    <button id="prev">← 上一条</button>
+    <button id="retake">重录 (R)</button>
+    <button class="primary" id="next">下一条 →</button>
+  </div>
+
+  <div class="hint">
+    <kbd>Space</kbd> 按住录音 · <kbd>R</kbd> 重录 · <kbd>→</kbd> 下一条 · <kbd>←</kbd> 上一条
+  </div>
+</div>
+
+<script>
+let scripts = [];
+let idx = 0;
+let audioCtx = null;
+let workletNode = null;
+let mediaStream = null;
+let recordedChunks = [];
+let sampleRate = 48000;
+let isRecording = false;
+let timerStart = 0;
+let timerInterval = null;
+const recorded = {};
+
+const $ = id => document.getElementById(id);
+
+async function init() {
+  scripts = await fetch('/scripts.json').then(r => r.json());
+  const status = await fetch('/status').then(r => r.json()).catch(() => ({recorded: []}));
+  status.recorded.forEach(id => recorded[id] = true);
+  const firstUnrecorded = scripts.findIndex(s => !recorded[s.id]);
+  idx = firstUnrecorded >= 0 ? firstUnrecorded : 0;
+  render();
+}
+
+function render() {
+  if (idx >= scripts.length) {
+    $('app').innerHTML = `<div class="done"><h1>全部录完</h1>
+      <p>${scripts.length} 条已保存到 recordings/</p>
+      <p style="margin-top:20px">关掉窗口即可</p></div>`;
+    return;
+  }
+  const s = scripts[idx];
+  $('counter').textContent = `${idx + 1} / ${scripts.length}`;
+  $('progress').style.width = `${((idx + 1) / scripts.length) * 100}%`;
+  $('id-tag').textContent = s.id;
+  $('tag-lang').textContent = s.lang === 'zh' ? '纯中文' : s.lang === 'en' ? '纯英文' : '中英混合';
+  $('tag-bucket').textContent = s.bucket === 'short' ? '短 3-6s' : s.bucket === 'medium' ? '中 8-15s' : '长 20-30s';
+  $('tag-scene').textContent = s.scene;
+  $('tag-recorded').style.display = recorded[s.id] ? 'inline-block' : 'none';
+  $('script').textContent = s.text;
+  $('playback').style.display = 'none';
+  $('playback').src = '';
+  if (recorded[s.id]) {
+    $('playback').src = `/recordings/${s.id}.wav?t=${Date.now()}`;
+    $('playback').style.display = 'block';
+  }
+  $('prev').disabled = idx === 0;
+}
+
+async function ensureAudio() {
+  if (audioCtx) return;
+  mediaStream = await navigator.mediaDevices.getUserMedia({
+    audio: { channelCount: 1, echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+  });
+  audioCtx = new AudioContext({ sampleRate: 48000 });
+  sampleRate = audioCtx.sampleRate;
+  await audioCtx.audioWorklet.addModule('/recorder-worklet.js');
+  workletNode = new AudioWorkletNode(audioCtx, 'pcm-recorder');
+  workletNode.port.onmessage = e => {
+    if (e.data.type === 'chunk') recordedChunks.push(e.data.data);
+  };
+  const source = audioCtx.createMediaStreamSource(mediaStream);
+  source.connect(workletNode);
+}
+
+async function startRecord() {
+  if (isRecording) return;
+  await ensureAudio();
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+  recordedChunks = [];
+  workletNode.port.postMessage({ type: 'start' });
+  isRecording = true;
+  timerStart = performance.now();
+  $('record').classList.add('recording');
+  $('record').textContent = '● 录音中…松开停止';
+  timerInterval = setInterval(() => {
+    const sec = ((performance.now() - timerStart) / 1000).toFixed(1);
+    $('timer').textContent = `${sec}s`;
+  }, 100);
+}
+
+async function stopRecord() {
+  if (!isRecording) return;
+  isRecording = false;
+  workletNode.port.postMessage({ type: 'stop' });
+  clearInterval(timerInterval);
+  $('record').classList.remove('recording');
+  $('record').textContent = '按住 空格 或 点击并保持 录音';
+  await new Promise(r => setTimeout(r, 80));
+  const pcm = mergeChunks(recordedChunks);
+  const wav = encodeWAV(pcm, sampleRate);
+  const s = scripts[idx];
+  const meta = { ...s, sample_rate: sampleRate, duration: pcm.length / sampleRate };
+  const res = await fetch('/save', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'audio/wav',
+      'X-Meta': encodeURIComponent(JSON.stringify(meta)),
+    },
+    body: wav,
+  });
+  if (!res.ok) { alert('保存失败：' + await res.text()); return; }
+  recorded[s.id] = true;
+  $('timer').textContent = `${(pcm.length / sampleRate).toFixed(1)}s · 已保存`;
+  render();
+}
+
+function mergeChunks(chunks) {
+  const total = chunks.reduce((a, c) => a + c.length, 0);
+  const out = new Float32Array(total);
+  let o = 0;
+  for (const c of chunks) { out.set(c, o); o += c.length; }
+  return out;
+}
+
+function encodeWAV(pcm, rate) {
+  const buf = new ArrayBuffer(44 + pcm.length * 2);
+  const v = new DataView(buf);
+  const str = (off, s) => { for (let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
+  str(0, 'RIFF');
+  v.setUint32(4, 36 + pcm.length * 2, true);
+  str(8, 'WAVE');
+  str(12, 'fmt ');
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true);
+  v.setUint32(28, rate * 2, true);
+  v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true);
+  str(36, 'data');
+  v.setUint32(40, pcm.length * 2, true);
+  let off = 44;
+  for (let i = 0; i < pcm.length; i++, off += 2) {
+    const s = Math.max(-1, Math.min(1, pcm[i]));
+    v.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+  }
+  return buf;
+}
+
+$('record').addEventListener('mousedown', startRecord);
+$('record').addEventListener('mouseup', stopRecord);
+$('record').addEventListener('mouseleave', () => { if (isRecording) stopRecord(); });
+$('record').addEventListener('touchstart', e => { e.preventDefault(); startRecord(); });
+$('record').addEventListener('touchend', e => { e.preventDefault(); stopRecord(); });
+
+$('next').addEventListener('click', () => { if (idx < scripts.length) { idx++; render(); } });
+$('prev').addEventListener('click', () => { if (idx > 0) { idx--; render(); } });
+$('retake').addEventListener('click', () => { delete recorded[scripts[idx].id]; render(); });
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.code === 'Space' && !e.repeat) { e.preventDefault(); startRecord(); }
+  else if (e.code === 'KeyR' && !isRecording) { e.preventDefault(); delete recorded[scripts[idx].id]; render(); }
+  else if (e.code === 'ArrowRight' && !isRecording) { e.preventDefault(); if (idx < scripts.length) { idx++; render(); } }
+  else if (e.code === 'ArrowLeft' && !isRecording) { e.preventDefault(); if (idx > 0) { idx--; render(); } }
+});
+document.addEventListener('keyup', e => {
+  if (e.code === 'Space' && isRecording) { e.preventDefault(); stopRecord(); }
+});
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "engine": "qwen3_asr_mlx",
+  "model": "Qwen/Qwen3-ASR-0.6B",
+  "wav_id": "006",
+  "text": "打开科色，重启一下。",
+  "latency_ms": 150657.63224987313,
+  "audio_sec": 1.952,
+  "rtf": 77.181164062435,
+  "raw": {
+    "language_input": null
+  }
+}

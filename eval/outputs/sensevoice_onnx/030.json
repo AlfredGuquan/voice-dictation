@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "030",
+  "text": "E FACTOR THESE COMPONENTS SO THAT ASYINC LOGIC LIFES IN A CUSTOMR HOO",
+  "latency_ms": 1895.866750041023,
+  "audio_sec": 7.264,
+  "rtf": 0.26099487197701304,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

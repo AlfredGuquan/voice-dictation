@@ -1,0 +1,12 @@
+{
+  "engine": "qwen3_asr_mlx",
+  "model": "Qwen/Qwen3-ASR-0.6B",
+  "wav_id": "007",
+  "text": "用 P N P M install 安装依赖。",
+  "latency_ms": 127791.34062491357,
+  "audio_sec": 2.848,
+  "rtf": 44.8705549947028,
+  "raw": {
+    "language_input": null
+  }
+}

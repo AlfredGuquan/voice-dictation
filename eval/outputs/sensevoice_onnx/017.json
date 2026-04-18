@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "017",
+  "text": "把 WHISPER SERVICE 换成 SENSFOICE 的调用接口保持兼容",
+  "latency_ms": 1141.347915865481,
+  "audio_sec": 4.325333333333333,
+  "rtf": 0.26387513467913404,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

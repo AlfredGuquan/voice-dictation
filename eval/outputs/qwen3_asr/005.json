@@ -1,0 +1,12 @@
+{
+  "engine": "qwen3_asr_mlx",
+  "model": "Qwen/Qwen3-ASR-0.6B",
+  "wav_id": "005",
+  "text": "把这个 commit 推到 main 分支。",
+  "latency_ms": 86463.05404091254,
+  "audio_sec": 2.2986666666666666,
+  "rtf": 37.614437662809976,
+  "raw": {
+    "language_input": null
+  }
+}

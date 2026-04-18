@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "025",
+  "text": "用 FFMP 去把 WEBM 转成 WB 采样率指定一万六千 MOO同的",
+  "latency_ms": 2663.33229187876,
+  "audio_sec": 7.738666666666667,
+  "rtf": 0.3441590659733063,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

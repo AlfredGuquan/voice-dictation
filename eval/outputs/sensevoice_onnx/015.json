@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "015",
+  "text": "请把今天的代办事项按优先级排序紧急的放上面",
+  "latency_ms": 1826.2695411685854,
+  "audio_sec": 3.6373333333333333,
+  "rtf": 0.5020902330925363,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

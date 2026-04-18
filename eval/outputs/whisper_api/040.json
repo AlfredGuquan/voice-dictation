@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "040",
+  "text": "我觉得Voice Dictation下一步要解决的最大问题不是准确率,而是用户在什么场景下会想到用它 目前我自己都只在Coding Agent的场景下用,IAM聊天的时候还是习惯打字 说明这个工具的Discoverability和触发成本还是有问题",
+  "latency_ms": 1668.839666992426,
+  "audio_sec": 17.04,
+  "rtf": 0.09793660017561186,
+  "raw": {
+    "language": "zh"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "023",
+  "text": "把音频从四十八 K 赫兹当 SMPLE 到十六 K 赫兹再位给模型",
+  "latency_ms": 2001.0025000665337,
+  "audio_sec": 6.165333333333334,
+  "rtf": 0.3245570664035251,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

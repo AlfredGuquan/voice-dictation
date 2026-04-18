@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "006",
+  "text": "打開Cursor重啟一下",
+  "latency_ms": 3210.735249798745,
+  "audio_sec": 1.952,
+  "rtf": 1.6448438779706684,
+  "raw": {
+    "language": "zh"
+  }
+}

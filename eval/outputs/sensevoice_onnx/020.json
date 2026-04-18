@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "020",
+  "text": "我刚才 PUSHD COMMITE 里有个 TOPLE 麻烦 REVERT 一想或者直接 AMAN",
+  "latency_ms": 1906.8711660802364,
+  "audio_sec": 4.8213333333333335,
+  "rtf": 0.39550701730093396,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

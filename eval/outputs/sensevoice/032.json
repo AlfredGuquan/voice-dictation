@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "032",
+  "text": "刚才那个p request里review service这个类的职责太多了，又做fetch，又做cachet，又做diff计算。我觉得应该拆成三个独立的service，每个只负责一件事。",
+  "latency_ms": 6252.598125021905,
+  "audio_sec": 10.965333333333334,
+  "rtf": 0.5702150527439723,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>刚才那个p request里review service这个类的职责太多了，又做fetch，又做cachet，又做diff计算。我觉得应该拆成三个独立的service，每个只负责一件事。"
+  }
+}

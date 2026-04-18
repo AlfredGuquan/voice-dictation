@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "017",
+  "text": "把WhisperService换成SenseVoice的调用接口保持兼容",
+  "latency_ms": 1773.2109590433538,
+  "audio_sec": 4.325333333333333,
+  "rtf": 0.4099593770907877,
+  "raw": {
+    "language": "zh"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "037",
+  "text": "我刚才在Tabless的CircleLight里看到History表有一个edited text字段 按理说应该是用过编辑后的文本,但我在本地全部都是空的 Status都是not extracted,估计是服务端回填的逻辑没触发",
+  "latency_ms": 3021.4942910242826,
+  "audio_sec": 15.957333333333333,
+  "rtf": 0.18934832204781182,
+  "raw": {
+    "language": "zh"
+  }
+}

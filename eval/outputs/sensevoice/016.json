@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "016",
+  "text": "声音快起来的时候要识别的准，这对模型来说是个挑战。",
+  "latency_ms": 5607.392083853483,
+  "audio_sec": 3.7386666666666666,
+  "rtf": 1.49983739760703,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>声音快起来的时候要识别的准，这对模型来说是个挑战。"
+  }
+}

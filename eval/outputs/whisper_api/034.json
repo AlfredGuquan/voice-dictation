@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "034",
+  "text": "我现在遇到一个问题,就是在macOS上用cgevent注入文字的时候,中文和英文的处理方式不一样,cjk字符如果用竹字符keydown会有编码问题,所以我改成了剪贴版粘贴法。",
+  "latency_ms": 2609.6510840579867,
+  "audio_sec": 12.832,
+  "rtf": 0.20337056453070346,
+  "raw": {
+    "language": "zh"
+  }
+}

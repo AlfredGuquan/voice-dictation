@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "022",
+  "text": "在 PACKAGE 到 JASON 里加一个 SCRIPT 要 DEATH BOCAL 指向 T S X WATCH S R C MAIN 多 T S",
+  "latency_ms": 3353.8617501035333,
+  "audio_sec": 8.336,
+  "rtf": 0.40233466292028947,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

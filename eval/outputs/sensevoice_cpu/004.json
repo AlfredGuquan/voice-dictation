@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "004",
+  "text": "麻烦你把会议纪要发我一份。",
+  "latency_ms": 6176.182958064601,
+  "audio_sec": 2.08,
+  "rtf": 2.9693187298387502,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>麻烦你把会议纪要发我一份。"
+  }
+}

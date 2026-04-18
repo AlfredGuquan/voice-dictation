@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "009",
+  "text": "RETURN THE TESTS AND PUSH IT",
+  "latency_ms": 1264.7948749363422,
+  "audio_sec": 2.2453333333333334,
+  "rtf": 0.5632993801676108,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

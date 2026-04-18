@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "009",
+  "text": "Return the test and push it.",
+  "latency_ms": 1582.949290983379,
+  "audio_sec": 2.2453333333333334,
+  "rtf": 0.704995230544854,
+  "raw": {
+    "language": "zh"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "037",
+  "text": "我刚才在 TAAPPLESS 的 CIRCULIT 里看到 HISTORY 表有一个 ADDITED TEXT 字段按理说应该是用户编辑后的文本但我在本地全部都是空的 STATUS 都是 NOT EXTRACTED 估计是服务端回填的逻辑没出发",
+  "latency_ms": 4869.246165966615,
+  "audio_sec": 15.957333333333333,
+  "rtf": 0.30514159629637044,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

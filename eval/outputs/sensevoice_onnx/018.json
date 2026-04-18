@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "018",
+  "text": "这个 FUNTION 里面有个 RACE CONDITION你 REVIEW 一下",
+  "latency_ms": 1185.3737919591367,
+  "audio_sec": 3.2106666666666666,
+  "rtf": 0.3691986478278042,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}
