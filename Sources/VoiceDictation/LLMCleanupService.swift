@@ -82,7 +82,7 @@ final class LLMCleanupService {
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 30
+        request.timeoutInterval = 12
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
 
         let (data, response): (Data, URLResponse)
