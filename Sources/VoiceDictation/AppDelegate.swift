@@ -11,9 +11,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupStatusItem()
 
         // Prepare main window controller (uses pipeline's stores)
+        // History-list retry routes through clipboard since the user is
+        // already inside the main window — focus has left the original app.
         mainWindowController = MainWindowController(
             historyStore: pipeline.historyStore,
-            vocabularyStore: pipeline.vocabularyStore
+            vocabularyStore: pipeline.vocabularyStore,
+            onRetryRecord: { [weak self] record in
+                Task { @MainActor [weak self] in
+                    self?.pipeline.retry(record: record, output: .clipboard)
+                }
+            }
         )
 
         // Application menu lets Cmd+, reach Settings when main window is frontmost.

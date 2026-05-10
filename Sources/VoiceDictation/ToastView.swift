@@ -5,6 +5,7 @@ struct ToastView: View {
     let kind: ToastManager.Kind
     let message: String
     let onClose: () -> Void
+    var onRetry: (() -> Void)? = nil
     let onHoverChange: (Bool) -> Void
 
     var body: some View {
@@ -21,6 +22,25 @@ struct ToastView: View {
                 .truncationMode(.tail)
 
             Spacer(minLength: 4)
+
+            if let retry = onRetry, kind == .error {
+                Button(action: retry) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 10, weight: .semibold))
+                        Text("重试")
+                            .font(.system(size: 11))
+                    }
+                    .foregroundColor(Color(red: 0xF4/255, green: 0xA8/255, blue: 0x8B/255))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule()
+                            .fill(Color.white.opacity(0.08))
+                    )
+                }
+                .buttonStyle(.plain)
+            }
 
             if kind == .error {
                 Button(action: onClose) {

@@ -37,6 +37,11 @@ final class HistoryStore: ObservableObject {
             self.audioFilePath = audioFilePath
             self.status = status
         }
+
+        /// A record can be retried only if the audio is still on disk.
+        var isRetryable: Bool {
+            return status == .failed && (audioFilePath?.isEmpty == false)
+        }
     }
 
     /// All records, sorted by timestamp descending (newest first).
@@ -80,6 +85,16 @@ final class HistoryStore: ObservableObject {
         records.insert(record, at: 0) // newest first
         saveToDisk()
         print("[HistoryStore] Added record: \(record.id)")
+    }
+
+    /// Mutate a record in place by ID and persist. Missing id is a no-op
+    /// (UI may race with deletion).
+    @discardableResult
+    func updateRecord(id: UUID, transform: (inout Record) -> Void) -> Bool {
+        guard let idx = records.firstIndex(where: { $0.id == id }) else { return false }
+        transform(&records[idx])
+        saveToDisk()
+        return true
     }
 
     /// Delete a record by ID.

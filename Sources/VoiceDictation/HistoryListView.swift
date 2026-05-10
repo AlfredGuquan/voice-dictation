@@ -4,6 +4,10 @@ import SwiftUI
 struct HistoryListView: View {
     @ObservedObject var historyStore: HistoryStore
     @Binding var selectedRecordID: UUID?
+    /// Invoked when the user taps "Retry" on a failed history card.
+    /// Wired to `DictationPipeline.retry(record:, output: .clipboard)` from
+    /// the app delegate. Optional so the view stays previewable.
+    var onRetry: ((HistoryStore.Record) -> Void)? = nil
     @State private var searchText = ""
 
     private var filteredRecords: [HistoryStore.Record] {
@@ -62,7 +66,10 @@ struct HistoryListView: View {
                                 isSelected: selectedRecordID == record.id,
                                 onSelect: { selectedRecordID = record.id },
                                 onCopy: { copyToClipboard(record.cleanedText) },
-                                onDelete: { historyStore.deleteRecord(id: record.id) }
+                                onDelete: { historyStore.deleteRecord(id: record.id) },
+                                onRetry: record.isRetryable
+                                    ? { onRetry?(record) }
+                                    : nil
                             )
                         }
                     }
@@ -87,6 +94,9 @@ struct HistoryCardView: View {
     let onSelect: () -> Void
     let onCopy: () -> Void
     let onDelete: () -> Void
+    /// Optional retry handler. Nil means hide the button (success records or
+    /// failed records whose audio file is gone).
+    var onRetry: (() -> Void)? = nil
 
     @State private var isHovered = false
     @State private var showCopied = false
@@ -143,6 +153,19 @@ struct HistoryCardView: View {
                             }
                         }
                         .foregroundColor(showCopied ? Theme.confirm : Theme.textSecondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                if let retry = onRetry {
+                    Button(action: retry) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 11))
+                            Text("重试")
+                                .font(.system(size: 11))
+                        }
+                        .foregroundColor(Theme.accent)
                     }
                     .buttonStyle(.plain)
                 }

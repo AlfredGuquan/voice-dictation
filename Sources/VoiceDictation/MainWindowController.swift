@@ -7,11 +7,17 @@ final class MainWindowController {
     private var window: NSWindow?
     private let historyStore: HistoryStore
     private let vocabularyStore: VocabularyStore
+    private let onRetryRecord: ((HistoryStore.Record) -> Void)?
     private let navigation = MainNavigationState()
 
-    init(historyStore: HistoryStore, vocabularyStore: VocabularyStore) {
+    init(
+        historyStore: HistoryStore,
+        vocabularyStore: VocabularyStore,
+        onRetryRecord: ((HistoryStore.Record) -> Void)? = nil
+    ) {
         self.historyStore = historyStore
         self.vocabularyStore = vocabularyStore
+        self.onRetryRecord = onRetryRecord
     }
 
     /// Toggle the main window: show if hidden, bring to front if visible.
@@ -47,7 +53,8 @@ final class MainWindowController {
         let contentView = MainContentView(
             historyStore: historyStore,
             vocabularyStore: vocabularyStore,
-            navigation: navigation
+            navigation: navigation,
+            onRetryRecord: onRetryRecord
         )
 
         let hostingView = NSHostingView(rootView: contentView)
