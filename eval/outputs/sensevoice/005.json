@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "005",
+  "text": "把这个commit推到 main分支。",
+  "latency_ms": 4921.141334110871,
+  "audio_sec": 2.2986666666666666,
+  "rtf": 2.1408677497582094,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>把这个commit推到 main分支。"
+  }
+}

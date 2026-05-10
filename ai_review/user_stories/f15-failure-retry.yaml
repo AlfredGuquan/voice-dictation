@@ -1,0 +1,53 @@
+metadata:
+  feature: "f15-failure-retry"
+  description: "ASR/cleanup 失败后允许从 toast 或历史记录中重试，避免重新录音"
+  generated_at: "2026-05-10T00:00:00+08:00"
+  command: ".build/debug/VoiceDictation"
+  screenshot_dir: "/tmp/voice-v03-qa/f15-failure-retry"
+  qa_note: "QA 前关闭主 VoiceDictation 实例避免全局热键冲突 (pkill -f VoiceDictation)。重试需要真实 OPENAI_API_KEY 调用 Whisper API；可通过 unset 或断网模拟首次失败。"
+
+stories:
+  - name: "Toast 重试按钮：error toast 出现时可一键重试"
+    acceptance_criteria:
+      - "触发 pipeline 失败（断网或临时 unset OPENAI_API_KEY）后，屏幕上的 error toast 内除关闭按钮外，还显示一个『重试』按钮（图标 arrow.clockwise 或文字）"
+      - "info toast（如『已复制到剪贴板』）不显示重试按钮"
+      - "未保存音频的失败 toast（无 audioFilePath）不显示重试按钮"
+
+  - name: "Toast 重试成功：清洗后文字注入到当前光标"
+    acceptance_criteria:
+      - "在文本编辑器中触发听写并模拟首次失败，error toast 出现时把光标保持在文本框内，点击 toast 上的『重试』按钮"
+      - "Toast 立即关闭，pill 进入处理动画状态"
+      - "处理成功后，清洗后的文字粘贴到文本编辑器光标处"
+      - "对应的历史记录从 failed 升级为 success，cleanedText 已填充"
+
+  - name: "历史记录重试按钮：失败卡片显示『重试』按钮"
+    acceptance_criteria:
+      - "打开主窗口 → 历史标签页，定位到一条 failed 状态的记录"
+      - "失败卡片右下角除『删除』按钮外，还显示一个『重试』按钮（icon arrow.clockwise）"
+      - "成功状态的记录不显示『重试』按钮"
+
+  - name: "历史重试成功：清洗后文字复制到剪贴板"
+    acceptance_criteria:
+      - "在主窗口历史页面点击 failed 记录的『重试』按钮"
+      - "处理动画期间按钮可视为 disabled 或显示 spinner（避免重复点击）"
+      - "处理成功后弹出 info toast『已复制到剪贴板』"
+      - "用 Cmd+V 在任何 app 内粘贴，得到清洗后的文字"
+      - "该条历史记录从 failed 升级为 success，cleanedText 已填充，重试按钮消失"
+
+  - name: "重试失败：保留 failed 状态、提示再次失败"
+    acceptance_criteria:
+      - "在仍然断网的状态下点击 toast/历史的『重试』按钮"
+      - "失败后弹出新的 error toast，内容为『重试失败：xxx』"
+      - "原历史记录仍然为 failed 状态，audioFilePath 未被清掉，可继续重试"
+
+  - name: "音频文件丢失：重试按钮反馈友好错误"
+    acceptance_criteria:
+      - "手工删除 ~/.voice-dictation/history/ 下对应的 wav 文件后点击重试"
+      - "弹出 error toast『音频文件丢失，无法重试』"
+      - "应用不崩溃"
+
+  - name: "并发保护：处理中再触发重试无效"
+    acceptance_criteria:
+      - "正在录音或处理中按下重试按钮（toast 或历史）"
+      - "弹出 error toast『正在听写中，请稍后重试』"
+      - "原 in-flight 流程不受影响"

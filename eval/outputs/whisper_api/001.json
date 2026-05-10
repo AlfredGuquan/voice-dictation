@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "001",
+  "text": "今晚吃什么你决定吧",
+  "latency_ms": 3729.4648750685155,
+  "audio_sec": 2.7413333333333334,
+  "rtf": 1.3604565448936705,
+  "raw": {
+    "language": "zh"
+  }
+}

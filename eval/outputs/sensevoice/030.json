@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "030",
+  "text": "Refactor this component so that Ithink logic lives in a customer hook.",
+  "latency_ms": 2790.309750009328,
+  "audio_sec": 7.264,
+  "rtf": 0.38412854488013876,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|en|><|NEUTRAL|><|Speech|><|withitn|>Refactor this component so that Ithink logic lives in a customer hook."
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "012",
+  "text": "我觉得这个方案不太行因为延迟还是太高用户体验不好",
+  "latency_ms": 1088.3544578682631,
+  "audio_sec": 3.525333333333333,
+  "rtf": 0.30872384394901564,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

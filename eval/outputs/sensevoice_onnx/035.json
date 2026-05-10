@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "035",
+  "text": "如果 STANS VOICE 的 C R比 WHISPER 低百分之五十但延迟高了两倍那我们还是不要换因为 VOICE DICTATION 的核心指标是端到端延迟 AQURACY 的编际收益比延迟的边际损失要",
+  "latency_ms": 4976.419917074963,
+  "audio_sec": 14.656,
+  "rtf": 0.33954830220216725,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

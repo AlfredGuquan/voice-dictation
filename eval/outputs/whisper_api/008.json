@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "008",
+  "text": "這個endpoint返回404",
+  "latency_ms": 735.7095000334084,
+  "audio_sec": 1.9306666666666668,
+  "rtf": 0.3810650034703427,
+  "raw": {
+    "language": "zh"
+  }
+}

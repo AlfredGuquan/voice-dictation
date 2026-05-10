@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "011",
+  "text": "明天上午10點有一個會,麻煩幫我提醒一下,內容大概是討論QR的規劃。",
+  "latency_ms": 2410.0800829473883,
+  "audio_sec": 5.754666666666667,
+  "rtf": 0.41880446297741913,
+  "raw": {
+    "language": "zh"
+  }
+}

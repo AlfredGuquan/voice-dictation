@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "032",
+  "text": "刚才那个pool request里review service这个类的职责太多了 又做fetch又做cache又做diff计算 我觉得应该拆成三个独立的service 每个只负责一件事",
+  "latency_ms": 2896.34258300066,
+  "audio_sec": 10.965333333333334,
+  "rtf": 0.2641363007357119,
+  "raw": {
+    "language": "zh"
+  }
+}

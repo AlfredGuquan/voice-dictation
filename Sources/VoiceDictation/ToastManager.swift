@@ -27,9 +27,9 @@ final class ToastManager {
 
     // MARK: - Public API
 
-    func show(_ kind: Kind, message: String) {
+    func show(_ kind: Kind, message: String, onRetry: (() -> Void)? = nil) {
         DispatchQueue.main.async { [weak self] in
-            self?.present(kind: kind, message: message)
+            self?.present(kind: kind, message: message, onRetry: onRetry)
         }
     }
 
@@ -47,7 +47,7 @@ final class ToastManager {
         }
     }
 
-    private func present(kind: Kind, message: String) {
+    private func present(kind: Kind, message: String, onRetry: (() -> Void)? = nil) {
         // Enforce stack cap — evict oldest.
         while active.count >= maxStack {
             dismiss(active.first!, animated: false)
@@ -78,6 +78,16 @@ final class ToastManager {
             onClose: { [weak self] in
                 guard let self = self, let it = item else { return }
                 self.dismiss(it, animated: true)
+            },
+            onRetry: onRetry.map { action in
+                { [weak self] in
+                    guard let self = self, let it = item else { return }
+                    // Dismiss the current toast immediately so the retry path
+                    // (pill animation, possible new toast on failure) reads
+                    // cleanly without the stale error overlapping it.
+                    self.dismiss(it, animated: true)
+                    action()
+                }
             },
             onHoverChange: { [weak self] hovering in
                 guard let self = self, let it = item, kind == .error else { return }

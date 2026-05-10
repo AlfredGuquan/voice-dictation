@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "036",
+  "text": "下一步我想先实测一下Grok的WhisperLarge V3 Turbo 从上海出VPN到Sydney节点的真实RTT 然后对比OpenAI WhisperOne走同一个出口的延迟 看看Grok是不是真的快到500毫秒以内",
+  "latency_ms": 2649.607833009213,
+  "audio_sec": 15.648,
+  "rtf": 0.16932565394997529,
+  "raw": {
+    "language": "zh"
+  }
+}

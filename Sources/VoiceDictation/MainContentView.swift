@@ -25,6 +25,9 @@ struct MainContentView: View {
     let historyStore: HistoryStore
     let vocabularyStore: VocabularyStore
     @ObservedObject var navigation: MainNavigationState
+    /// Retry handler injected from AppDelegate; routes to
+    /// `DictationPipeline.retry(record:, output: .clipboard)`.
+    var onRetryRecord: ((HistoryStore.Record) -> Void)? = nil
 
     @State private var selectedRecordID: UUID?
 
@@ -122,7 +125,8 @@ struct MainContentView: View {
         } else {
             HistoryListView(
                 historyStore: historyStore,
-                selectedRecordID: $selectedRecordID
+                selectedRecordID: $selectedRecordID,
+                onRetry: onRetryRecord
             )
         }
     }

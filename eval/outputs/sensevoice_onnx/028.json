@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "028",
+  "text": "这个 BUG 我觉得跟 REACT 十八的 SCRIPT MODE 有关双重调用导致的",
+  "latency_ms": 2111.3033751025796,
+  "audio_sec": 5.610666666666667,
+  "rtf": 0.37630169470697117,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

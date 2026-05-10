@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "030",
+  "text": "我們將這些元件重新設計,使ASync的邏輯生存在客戶的Hook上。",
+  "latency_ms": 1584.2497919220477,
+  "audio_sec": 7.264,
+  "rtf": 0.2180960616632775,
+  "raw": {
+    "language": "zh"
+  }
+}

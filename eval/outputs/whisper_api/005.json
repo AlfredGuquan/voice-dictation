@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "005",
+  "text": "把这个commit推到main分区",
+  "latency_ms": 1745.651917066425,
+  "audio_sec": 2.2986666666666666,
+  "rtf": 0.7594193374708926,
+  "raw": {
+    "language": "zh"
+  }
+}

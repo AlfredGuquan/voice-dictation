@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "038",
+  "text": "目前Pipeline是串行的,先ASR再LLM,总延迟是两个加起来 其实如果ASR出结构的时候,就启用LLM的流逝调用 理论上可以把LLM的TTFT叠在ASR后半段里,端到端能省几百毫秒",
+  "latency_ms": 1459.85145913437,
+  "audio_sec": 16.698666666666668,
+  "rtf": 0.08742323493698319,
+  "raw": {
+    "language": "zh"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "018",
+  "text": "这个 function里面有个race condition，你review一下。",
+  "latency_ms": 4004.7235409729183,
+  "audio_sec": 3.2106666666666666,
+  "rtf": 1.247318378625286,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>这个 function里面有个race condition，你review一下。"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "engine": "qwen3_asr_mlx",
+  "model": "Qwen/Qwen3-ASR-0.6B",
+  "wav_id": "011",
+  "text": "明天上午十点有一个会，麻烦帮我提醒一下。内容大概是讨论Q二的规划。",
+  "latency_ms": 109508.46058409661,
+  "audio_sec": 5.754666666666667,
+  "rtf": 19.02950543050798,
+  "raw": {
+    "language_input": null
+  }
+}

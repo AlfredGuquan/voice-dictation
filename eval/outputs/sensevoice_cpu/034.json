@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "034",
+  "text": "我现在遇到一个问题，就是在mac OS上用cgeven注入文字的时候，中文和英文的处理方式不一样。CJK字符如果用逐字符key down会有编码问题，所以我改成了剪切板粘贴法。",
+  "latency_ms": 7542.247500037774,
+  "audio_sec": 12.832,
+  "rtf": 0.5877686642797517,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>我现在遇到一个问题，就是在mac OS上用cgeven注入文字的时候，中文和英文的处理方式不一样。CJK字符如果用逐字符key down会有编码问题，所以我改成了剪切板粘贴法。"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "001",
+  "text": "今晚吃什么，你决定吧。",
+  "latency_ms": 7095.6365840975195,
+  "audio_sec": 2.7413333333333334,
+  "rtf": 2.588388831747636,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>今晚吃什么，你决定吧。"
+  }
+}

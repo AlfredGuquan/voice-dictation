@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "039",
+  "text": "这个功能的接收标准是按热键说话松开之后两秒内文字出现在光标位置而且清洗之后不能就原意口语填充词像嗯那个就是说要被去掉但是专业术语和数字不能被改动",
+  "latency_ms": 4233.6963750422,
+  "audio_sec": 14.138666666666667,
+  "rtf": 0.29944099219932574,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

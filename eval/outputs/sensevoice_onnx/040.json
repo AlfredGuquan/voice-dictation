@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "040",
+  "text": "我觉得 VOISE DICATION 下一步要解决的最大问题不是准确率而是用户在什么场景下会想到用它目前我自己都只在 COLDINGENT 场景下用 I AM 聊天的时候还是习惯打字说明这个工具的 DISCOVERRABILITY 和触发成本还是有问题",
+  "latency_ms": 4995.709125185385,
+  "audio_sec": 17.04,
+  "rtf": 0.29317541814468223,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

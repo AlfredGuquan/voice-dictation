@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "015",
+  "text": "请把今天的代办事项按优先级排序，紧急的放上面。",
+  "latency_ms": 6389.511791057885,
+  "audio_sec": 3.6373333333333333,
+  "rtf": 1.756647303260049,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>请把今天的代办事项按优先级排序，紧急的放上面。"
+  }
+}

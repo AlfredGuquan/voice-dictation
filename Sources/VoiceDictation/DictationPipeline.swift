@@ -11,6 +11,14 @@ final class DictationPipeline {
         case processing
     }
 
+    /// Where the cleaned text from a retry should land.
+    /// `inject` is for the toast path (focus likely still on the origin app);
+    /// `clipboard` is for the history-list path (user is in the main window).
+    enum RetryOutput {
+        case inject
+        case clipboard
+    }
+
     private(set) var state: State = .idle
 
     let hotkeyManager = HotkeyManager(hotkey: Config.hotkey)
@@ -276,16 +284,122 @@ final class DictationPipeline {
                 audioFilePath: historyURL.path,
                 status: .failed
             )
+            let recordID = record.id
             historyStore.addRecord(record)
 
             // Toast is 320pt wide — filenames truncate to "…". The history list
             // already surfaces the file, so just confirm persistence here.
             ToastManager.shared.show(
                 .error,
-                message: "\(message) · Audio saved to history"
+                message: "\(message) · Audio saved to history",
+                onRetry: { [weak self] in
+                    Task { @MainActor [weak self] in
+                        guard let self = self,
+                              let updated = self.historyStore.records.first(where: { $0.id == recordID })
+                        else { return }
+                        self.retry(record: updated, output: .inject)
+                    }
+                }
             )
         } else {
             ToastManager.shared.show(.error, message: message)
+        }
+    }
+
+    // MARK: - Retry
+
+    /// Retry a previously-failed record. Reads the saved audio, runs ASR +
+    /// cleanup again, and routes the cleaned text per `output`. On success the
+    /// history record is upgraded in place (failed → success) and the audio
+    /// file is removed. On failure the record is left untouched so the user
+    /// can retry again.
+    @MainActor
+    func retry(record: HistoryStore.Record, output: RetryOutput) {
+        guard state == .idle else {
+            ToastManager.shared.show(.error, message: "正在听写中，请稍后重试")
+            return
+        }
+        guard let path = record.audioFilePath, !path.isEmpty,
+              FileManager.default.fileExists(atPath: path)
+        else {
+            ToastManager.shared.show(.error, message: "音频文件丢失，无法重试")
+            return
+        }
+
+        let url = URL(fileURLWithPath: path)
+        let recordID = record.id
+
+        state = .processing
+        showPill(state: .processing)
+
+        Task {
+            await processRetry(url: url, recordID: recordID, output: output)
+        }
+    }
+
+    private func processRetry(url: URL, recordID: UUID, output: RetryOutput) async {
+        do {
+            let transcription = try await whisperService.transcribe(fileURL: url)
+            let raw = transcription.text
+
+            if raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                await MainActor.run {
+                    self.state = .idle
+                    self.completeAndHidePill()
+                    ToastManager.shared.show(.error, message: "重试结果为空")
+                }
+                return
+            }
+
+            let cleaned = try await cleanupService.cleanup(
+                rawText: raw,
+                vocabulary: self.vocabularyStore.current
+            )
+
+            await MainActor.run {
+                switch output {
+                case .inject:
+                    TextInjector.inject(cleaned)
+                case .clipboard:
+                    let pb = NSPasteboard.general
+                    pb.clearContents()
+                    pb.setString(cleaned, forType: .string)
+                    ToastManager.shared.show(.info, message: "已复制到剪贴板")
+                }
+
+                // Upgrade the record in place. Drop audioFilePath since the
+                // wav is about to be deleted — `isRetryable` will then read false.
+                self.historyStore.updateRecord(id: recordID) { rec in
+                    rec.rawTranscript = raw
+                    rec.cleanedText = cleaned
+                    rec.status = .success
+                    rec.audioFilePath = nil
+                }
+                try? FileManager.default.removeItem(at: url)
+
+                self.state = .idle
+                self.completeAndHidePill()
+            }
+        } catch {
+            await MainActor.run {
+                self.state = .idle
+                self.pillVC?.freezeProgressAnimation()
+                self.hidePill()
+                // Re-arm retry from the (still failed) record so the toast
+                // keeps offering the action across multiple attempts.
+                ToastManager.shared.show(
+                    .error,
+                    message: "重试失败：\(error.localizedDescription)",
+                    onRetry: { [weak self] in
+                        Task { @MainActor [weak self] in
+                            guard let self = self,
+                                  let again = self.historyStore.records.first(where: { $0.id == recordID })
+                            else { return }
+                            self.retry(record: again, output: output)
+                        }
+                    }
+                )
+            }
         }
     }
 

@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "021",
+  "text": "把 react component的 states拆成两个 use state，一个管 loading一个管 error.",
+  "latency_ms": 2610.1160410325974,
+  "audio_sec": 5.941333333333334,
+  "rtf": 0.4393148632797235,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|en|><|NEUTRAL|><|Speech|><|withitn|>把 react component的 states拆成两个 use state，一个管 loading一个管 error."
+  }
+}

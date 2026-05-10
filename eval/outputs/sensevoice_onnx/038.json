@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "038",
+  "text": "目前 PAPPLAN 串新的先 A S R 在 LLM 总延迟是两个加起来其实如果 AS S R 出结果的时候就启用 LLM 的流失调用理论上可以把 LLM 的 TTFT 叠在 A S R 后半段里传导端能省几百毫米",
+  "latency_ms": 4362.359042046592,
+  "audio_sec": 16.698666666666668,
+  "rtf": 0.2612399617961469,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "031",
+  "text": "我想作为一个语音输入法的一va框架，先用open airI whispers作为baseline，然后对比sanense voice和Qban3SR这两个本地模型主要看CER和端到端latency。",
+  "latency_ms": 23595.66808398813,
+  "audio_sec": 12.256,
+  "rtf": 1.9252340146857156,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>我想作为一个语音输入法的一va框架，先用open airI whispers作为baseline，然后对比sanense voice和Qban3SR这两个本地模型主要看CER和端到端latency。"
+  }
+}

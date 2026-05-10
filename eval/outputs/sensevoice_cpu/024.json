@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "024",
+  "text": "andropsonny4.6和ops4.7，哪个更适合做tous？",
+  "latency_ms": 3425.113790901378,
+  "audio_sec": 4.298666666666667,
+  "rtf": 0.7967851560719706,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>andropsonny4.6和ops4.7，哪个更适合做tous？"
+  }
+}

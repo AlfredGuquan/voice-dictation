@@ -1,0 +1,12 @@
+{
+  "engine": "qwen3_asr_mlx",
+  "model": "Qwen/Qwen3-ASR-0.6B",
+  "wav_id": "009",
+  "text": "Return the test and push it.",
+  "latency_ms": 233060.97287521698,
+  "audio_sec": 2.2453333333333334,
+  "rtf": 103.79793922589829,
+  "raw": {
+    "language_input": null
+  }
+}

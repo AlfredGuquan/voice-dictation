@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "027",
+  "text": "apple silicon anE跑 coreml模型会比Gpu快吗？",
+  "latency_ms": 2617.5307501107454,
+  "audio_sec": 5.333333333333333,
+  "rtf": 0.49078701564576477,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>apple silicon anE跑 coreml模型会比Gpu快吗？"
+  }
+}

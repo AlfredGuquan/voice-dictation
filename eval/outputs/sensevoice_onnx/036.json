@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "036",
+  "text": "下一步我想先实测一下 GROCK 的 WHISSPER LARGE V 三 TURBO 从上海出 V片 到 SYNE 节点的真实 R T T 然后对比 OPEN AI WHISPER ONE 走同一个出口的延迟看看 GROCK 是不是真的快到五百毫秒以",
+  "latency_ms": 5131.5490829292685,
+  "audio_sec": 15.648,
+  "rtf": 0.32793641889885405,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "021",
+  "text": "把 React Component 的 state 拆成兩個 use state 一個管 loading 一個管 error",
+  "latency_ms": 884.5625000540167,
+  "audio_sec": 5.941333333333334,
+  "rtf": 0.148882826535124,
+  "raw": {
+    "language": "zh"
+  }
+}

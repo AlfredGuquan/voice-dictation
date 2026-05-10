@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "033",
+  "text": "这个项目的架构是这样的前端用 SWIFT UI 中间有个 PAPPLANT 负责协调录音 A S R LL M 清洗和文本注入后端的 A S R 和 LL M 都是通过 H T T P 调用云端服务",
+  "latency_ms": 4021.6348748654127,
+  "audio_sec": 12.234666666666667,
+  "rtf": 0.3287081687172035,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

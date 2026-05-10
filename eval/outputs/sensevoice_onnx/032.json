@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "032",
+  "text": "才那个 POL REQUEST 里 REVIEW SERVICE 这个类的职责太多了又做 FTCH 又做 CASHTE 又做 DIFF 计算我觉得应该拆成三个独立的 SERVICE 每个只负责一件事",
+  "latency_ms": 3680.0817910116166,
+  "audio_sec": 10.965333333333334,
+  "rtf": 0.33561057189429866,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

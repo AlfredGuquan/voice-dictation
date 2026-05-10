@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "035",
+  "text": "如果SenseVoice的CER比Whisper低50%,但延遲高了兩倍,那我們還是不要換,因為VoiceDictation的核心指標是端到端延遲,Accuracy的編輯收益比延遲的編輯損失要小。",
+  "latency_ms": 1806.7404578905553,
+  "audio_sec": 14.656,
+  "rtf": 0.12327650504165906,
+  "raw": {
+    "language": "zh"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "011",
+  "text": "明天上午10点有一个会，麻烦帮我提醒一下内容大概是讨论Q2的规划。",
+  "latency_ms": 10004.427334060892,
+  "audio_sec": 5.754666666666667,
+  "rtf": 1.7384894579577546,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>明天上午10点有一个会，麻烦帮我提醒一下内容大概是讨论Q2的规划。"
+  }
+}

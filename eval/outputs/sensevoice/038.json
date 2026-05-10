@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "038",
+  "text": "目前，paline是串行的，先asR在LM总延迟是两个加起来。其实如果asR出结果的时候，就启用LM的流式调用。理论上可以把LM的ttft叠在asR后半段里，端到端能省几百毫秒。",
+  "latency_ms": 8876.85375008732,
+  "audio_sec": 16.698666666666668,
+  "rtf": 0.5315905711087104,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>目前，paline是串行的，先asR在LM总延迟是两个加起来。其实如果asR出结果的时候，就启用LM的流式调用。理论上可以把LM的ttft叠在asR后半段里，端到端能省几百毫秒。"
+  }
+}

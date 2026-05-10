@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "003",
+  "text": "嗯那个我想想再说",
+  "latency_ms": 1637.533833971247,
+  "audio_sec": 2.7253333333333334,
+  "rtf": 0.6008563480814263,
+  "raw": {
+    "language": "zh"
+  }
+}

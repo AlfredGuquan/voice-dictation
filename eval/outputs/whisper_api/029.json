@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "029",
+  "text": "3200 ignorance abort 测试服务后,确定疾病的头发",
+  "latency_ms": 7408.565707970411,
+  "audio_sec": 6.874666666666666,
+  "rtf": 1.0776618077924376,
+  "raw": {
+    "language": "zh"
+  }
+}

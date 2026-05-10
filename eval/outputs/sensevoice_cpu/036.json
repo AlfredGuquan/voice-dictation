@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "036",
+  "text": "下一步我想先实测一下glock的ws largege v从上海出V片到sydney节点的真实tt，然后对比openaiiws one走同一个出口的延迟，看看glock是不是真的快到500毫秒以内。",
+  "latency_ms": 12874.184750020504,
+  "audio_sec": 15.648,
+  "rtf": 0.8227367554972204,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>下一步我想先实测一下glock的ws largege v从上海出V片到sydney节点的真实tt，然后对比openaiiws one走同一个出口的延迟，看看glock是不是真的快到500毫秒以内。"
+  }
+}

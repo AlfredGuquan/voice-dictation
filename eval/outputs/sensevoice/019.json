@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "019",
+  "text": "帮我查一下cloud API的rate limit是多少，顺便看一下pro的文档。",
+  "latency_ms": 2786.232209065929,
+  "audio_sec": 5.061333333333334,
+  "rtf": 0.5504937188618142,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>帮我查一下cloud API的rate limit是多少，顺便看一下pro的文档。"
+  }
+}

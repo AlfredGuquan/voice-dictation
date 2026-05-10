@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "033",
+  "text": "这个项目的架构是这样的，前端用swift uI中间有一个paline负责协调录音ASRLLM清洗和文本注入后端的ASR和LLM都是通过HTTP调用云端服务的。",
+  "latency_ms": 4105.1240840461105,
+  "audio_sec": 12.234666666666667,
+  "rtf": 0.335532155954074,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>这个项目的架构是这样的，前端用swift uI中间有一个paline负责协调录音ASRLLM清洗和文本注入后端的ASR和LLM都是通过HTTP调用云端服务的。"
+  }
+}

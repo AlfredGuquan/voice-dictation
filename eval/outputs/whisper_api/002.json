@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "002",
+  "text": "這個BUG我晚點修",
+  "latency_ms": 2287.1165829710662,
+  "audio_sec": 1.7813333333333334,
+  "rtf": 1.2839352075062123,
+  "raw": {
+    "language": "zh"
+  }
+}

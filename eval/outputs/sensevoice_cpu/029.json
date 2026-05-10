@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "029",
+  "text": "Spin up a testover on port 3000 and core the health endpoint.",
+  "latency_ms": 2555.2732080686837,
+  "audio_sec": 6.874666666666666,
+  "rtf": 0.37169412452511885,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|en|><|NEUTRAL|><|Speech|><|withitn|>Spin up a testover on port 3000 and core the health endpoint."
+  }
+}

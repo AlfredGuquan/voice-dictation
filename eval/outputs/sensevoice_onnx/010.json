@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "010",
+  "text": "SHOW ME THE DIFFERNT FOR THIS FILE",
+  "latency_ms": 598.7700421828777,
+  "audio_sec": 2.0853333333333333,
+  "rtf": 0.2871339716350117,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "engine": "qwen3_asr_mlx",
+  "model": "Qwen/Qwen3-ASR-0.6B",
+  "wav_id": "008",
+  "text": "这个 endpoint 返回四零四。",
+  "latency_ms": 99747.52254108898,
+  "audio_sec": 1.9306666666666668,
+  "rtf": 51.66480794600603,
+  "raw": {
+    "language_input": null
+  }
+}

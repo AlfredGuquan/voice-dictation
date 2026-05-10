@@ -1,0 +1,12 @@
+{
+  "engine": "qwen3_asr_mlx",
+  "model": "Qwen/Qwen3-ASR-0.6B",
+  "wav_id": "001",
+  "text": "今晚吃什么？你决定吧。",
+  "latency_ms": 68948.85554118082,
+  "audio_sec": 2.7413333333333334,
+  "rtf": 25.151576680878218,
+  "raw": {
+    "language_input": null
+  }
+}

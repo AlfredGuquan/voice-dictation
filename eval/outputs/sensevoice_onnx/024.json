@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "024",
+  "text": "ANTROPIC SONC 四点六和 OPS 四点七哪个更适合做 TOO US",
+  "latency_ms": 1511.2645830959082,
+  "audio_sec": 4.298666666666667,
+  "rtf": 0.35156589246958164,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

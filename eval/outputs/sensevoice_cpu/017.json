@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "017",
+  "text": "把whisper service换成sense voice的调用接口保持兼容。",
+  "latency_ms": 2180.3321251645684,
+  "audio_sec": 4.325333333333333,
+  "rtf": 0.5040841843013029,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>把whisper service换成sense voice的调用接口保持兼容。"
+  }
+}

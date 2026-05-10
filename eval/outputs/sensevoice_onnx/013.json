@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "013",
+  "text": "等一下我先把刚才思路整理一下然后再告诉你接下来该怎么做",
+  "latency_ms": 2100.134000182152,
+  "audio_sec": 4.229333333333333,
+  "rtf": 0.49656383989174463,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "040",
+  "text": "我觉得voice dation下一步要解决的最大问题不是准确率，而是用户在什么场景下会想到用它。目前我自己都只在coding agent的场景下，用I am聊天的时候，还是习惯打字，说明这个工具的discoverability和触发成本还是有问题。",
+  "latency_ms": 12412.696500075981,
+  "audio_sec": 17.04,
+  "rtf": 0.7284446302861491,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>我觉得voice dation下一步要解决的最大问题不是准确率，而是用户在什么场景下会想到用它。目前我自己都只在coding agent的场景下，用I am聊天的时候，还是习惯打字，说明这个工具的discoverability和触发成本还是有问题。"
+  }
+}

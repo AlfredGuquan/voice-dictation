@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "004",
+  "text": "麻煩你把會議機要發我一份",
+  "latency_ms": 1028.426832985133,
+  "audio_sec": 2.08,
+  "rtf": 0.49443597739669853,
+  "raw": {
+    "language": "zh"
+  }
+}

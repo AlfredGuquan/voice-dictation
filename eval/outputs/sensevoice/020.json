@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "020",
+  "text": "我刚才push commitit里有个tple，麻烦revert一下，或者直接amend。",
+  "latency_ms": 3500.178416026756,
+  "audio_sec": 4.8213333333333335,
+  "rtf": 0.7259772710232486,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>我刚才push commitit里有个tple，麻烦revert一下，或者直接amend。"
+  }
+}

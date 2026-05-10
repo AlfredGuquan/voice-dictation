@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "016",
+  "text": "声音快起来的时候要识别得准这对模型来说是个挑战",
+  "latency_ms": 1113.1274169310927,
+  "audio_sec": 3.7386666666666666,
+  "rtf": 0.29773379554148344,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

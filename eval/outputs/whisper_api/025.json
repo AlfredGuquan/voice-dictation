@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "025",
+  "text": "用 ffmpeg 把 webm 转成 wav 采样率指定 16000 monotone 的",
+  "latency_ms": 1612.0998330879956,
+  "audio_sec": 7.738666666666667,
+  "rtf": 0.2083175180592689,
+  "raw": {
+    "language": "zh"
+  }
+}

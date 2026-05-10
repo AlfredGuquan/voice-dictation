@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "028",
+  "text": "这个bug我觉得跟react18的script mode有关，双重调用导致的。",
+  "latency_ms": 2886.366375023499,
+  "audio_sec": 5.610666666666667,
+  "rtf": 0.5144426761567548,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>这个bug我觉得跟react18的script mode有关，双重调用导致的。"
+  }
+}

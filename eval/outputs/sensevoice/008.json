@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "008",
+  "text": "这个endpoint返回404。",
+  "latency_ms": 4067.6349168643355,
+  "audio_sec": 1.9306666666666668,
+  "rtf": 2.1068551019670245,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>这个endpoint返回404。"
+  }
+}

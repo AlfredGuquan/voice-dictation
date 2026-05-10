@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "034",
+  "text": "我现在遇到一个问题就是在 MAC OS S 上用 C G EVENT 注入文字的时候中文和英文的处理方式不一样 C J K 字符如果用竹字符 KEY DOWN 会有编码问题所以我改成了剪切版粘贴法",
+  "latency_ms": 4160.9606659039855,
+  "audio_sec": 12.832,
+  "rtf": 0.3242643910461335,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

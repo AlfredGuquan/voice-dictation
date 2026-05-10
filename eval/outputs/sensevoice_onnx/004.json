@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice_onnx",
+  "model": "sherpa-onnx/sense-voice-zh-en-ja-ko-yue-int8-2025-09-09",
+  "wav_id": "004",
+  "text": "麻烦你把会议纪要发我一份",
+  "latency_ms": 695.921374950558,
+  "audio_sec": 2.08,
+  "rtf": 0.33457758411084515,
+  "raw": {
+    "provider": "cpu",
+    "num_threads": 4
+  }
+}

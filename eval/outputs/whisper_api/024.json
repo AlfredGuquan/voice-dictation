@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "024",
+  "text": "Anthropic的Sony 4.6和OPPO 4.7哪個更適合做Tour Use",
+  "latency_ms": 1162.848792038858,
+  "audio_sec": 4.298666666666667,
+  "rtf": 0.27051383189489564,
+  "raw": {
+    "language": "zh"
+  }
+}

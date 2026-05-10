@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "035",
+  "text": "如果sans voiceice的ceR比whiser低50%，但延迟高了两倍，那我们还是不要换。因为voice dictation的核心指标是端到端延迟 accuracy的边际收益比延迟的边际损失要小。",
+  "latency_ms": 5020.794332958758,
+  "audio_sec": 14.656,
+  "rtf": 0.3425760325435834,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>如果sans voiceice的ceR比whiser低50%，但延迟高了两倍，那我们还是不要换。因为voice dictation的核心指标是端到端延迟 accuracy的边际收益比延迟的边际损失要小。"
+  }
+}

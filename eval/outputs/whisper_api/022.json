@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "022",
+  "text": "在 package.json 里加一个 script 叫 devlocal 指向 tsx watch src main.ts",
+  "latency_ms": 3404.9532909411937,
+  "audio_sec": 8.336,
+  "rtf": 0.4084636865332526,
+  "raw": {
+    "language": "zh"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "025",
+  "text": "用FFP把wem转成WAB采样率指定16000mon通道。",
+  "latency_ms": 10588.234292110428,
+  "audio_sec": 7.738666666666667,
+  "rtf": 1.3682246242389422,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>用FFP把wem转成WAB采样率指定16000mon通道。"
+  }
+}

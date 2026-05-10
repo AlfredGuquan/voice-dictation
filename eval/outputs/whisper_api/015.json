@@ -1,0 +1,12 @@
+{
+  "engine": "openai_whisper_api",
+  "model": "whisper-1",
+  "wav_id": "015",
+  "text": "请把今天的大半事项按优先级排序,请记得放上面。",
+  "latency_ms": 1194.1760831978172,
+  "audio_sec": 3.6373333333333333,
+  "rtf": 0.32831087331318287,
+  "raw": {
+    "language": "zh"
+  }
+}

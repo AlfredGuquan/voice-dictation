@@ -1,0 +1,13 @@
+{
+  "engine": "sensevoice",
+  "model": "iic/SenseVoiceSmall",
+  "wav_id": "014",
+  "text": "刚刚那个就是说你之前提到那个问题，我想再确认一下。",
+  "latency_ms": 13563.964959001169,
+  "audio_sec": 4.192,
+  "rtf": 3.2356786638838666,
+  "raw": {
+    "language_input": "auto",
+    "funasr_raw": "<|zh|><|NEUTRAL|><|Speech|><|withitn|>刚刚那个就是说你之前提到那个问题，我想再确认一下。"
+  }
+}
