@@ -37,6 +37,10 @@ final class DictationPipeline {
     private var currentAudioURL: URL?
     private var recordingStartTime: Date?
 
+    // In-flight ASR + cleanup task. Held so Esc during processing can cancel
+    // the network requests instead of letting them complete and inject silently.
+    private var processingTask: Task<Void, Never>?
+
     func start() {
         // Startup sanity check: warn the user if no key is configured yet.
         // Services read Config.apiKey on every request, so Settings updates
@@ -151,14 +155,33 @@ final class DictationPipeline {
     }
 
     private func handleCancel() {
-        guard state == .recording else { return }
-        state = .idle
-        hotkeyManager.isActive = false
-        audioRecorder.cancelRecording()
-        currentAudioURL = nil
-        hidePill()
-        stopLevelUpdates()
-        print("[Pipeline] Recording cancelled")
+        switch state {
+        case .idle:
+            return
+        case .recording:
+            state = .idle
+            hotkeyManager.isActive = false
+            audioRecorder.cancelRecording()
+            currentAudioURL = nil
+            hidePill()
+            stopLevelUpdates()
+            print("[Pipeline] Recording cancelled")
+        case .processing:
+            // Cancel the in-flight ASR / LLM task. URLSession.data(for:) will
+            // throw URLError.cancelled at the next await, which processAudio /
+            // processRetry catch and short-circuit (no toast, no history).
+            processingTask?.cancel()
+            processingTask = nil
+            state = .idle
+            hotkeyManager.isActive = false
+            if let url = currentAudioURL {
+                try? FileManager.default.removeItem(at: url)
+            }
+            currentAudioURL = nil
+            pillVC?.freezeProgressAnimation()
+            hidePill()
+            print("[Pipeline] Processing cancelled")
+        }
     }
 
     // MARK: - Recording
@@ -185,11 +208,14 @@ final class DictationPipeline {
     private func stopAndProcess() {
         guard state == .recording else { return }
         state = .processing
-        hotkeyManager.isActive = false
+        // Keep hotkeyManager.isActive = true through processing so Esc still
+        // gets intercepted by the CGEvent tap and routed to handleCancel.
+        // It clears when state returns to .idle (success / error / cancel).
         stopLevelUpdates()
 
         guard let audioURL = audioRecorder.stopRecording() else {
             state = .idle
+            hotkeyManager.isActive = false
             hidePill()
             return
         }
@@ -201,9 +227,9 @@ final class DictationPipeline {
         currentAudioURL = audioURL
         updatePill(state: .processing)
 
-        // Run ASR + cleanup pipeline
-        Task {
-            await processAudio(url: audioURL, recordDuration: recordSeconds)
+        // Run ASR + cleanup pipeline. Hold the task so Esc can cancel it.
+        processingTask = Task { [weak self] in
+            await self?.processAudio(url: audioURL, recordDuration: recordSeconds)
         }
     }
 
@@ -224,6 +250,9 @@ final class DictationPipeline {
             if rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 await MainActor.run {
                     self.state = .idle
+                    self.hotkeyManager.isActive = false
+                    self.processingTask = nil
+                    self.currentAudioURL = nil
                     completeAndHidePill()
                     print("[Pipeline] Empty transcription, nothing to inject")
                 }
@@ -244,6 +273,9 @@ final class DictationPipeline {
             if cleanedText.isEmpty {
                 await MainActor.run {
                     self.state = .idle
+                    self.hotkeyManager.isActive = false
+                    self.processingTask = nil
+                    self.currentAudioURL = nil
                     completeAndHidePill()
                     print("[Pipeline] Cleaned text is empty, nothing to inject")
                 }
@@ -281,6 +313,9 @@ final class DictationPipeline {
                 self.historyStore.addRecord(record)
 
                 self.state = .idle
+                self.hotkeyManager.isActive = false
+                self.processingTask = nil
+                self.currentAudioURL = nil
                 completeAndHidePill()
             }
 
@@ -288,6 +323,17 @@ final class DictationPipeline {
             try? FileManager.default.removeItem(at: url)
 
         } catch {
+            // Esc cancellation surfaces as either CancellationError (raised by
+            // Task.checkCancellation) or URLError.cancelled (URLSession reacting
+            // to the parent task being cancelled). handleCancel already cleaned
+            // up state + UI + audio file, so swallow silently — no toast, no
+            // history record, no idle reset (already done).
+            if Task.isCancelled || error is CancellationError ||
+                (error as? URLError)?.code == .cancelled {
+                print("[Pipeline] Processing cancelled (mid-flight)")
+                return
+            }
+
             // Capture by value so the @MainActor.run closure doesn't reach
             // back into our mutable locals (sendable-closure rule).
             let capturedAsr = asrLatency
@@ -313,6 +359,9 @@ final class DictationPipeline {
     ) {
         print("[Pipeline] Error: \(message)")
         state = .idle
+        hotkeyManager.isActive = false
+        processingTask = nil
+        currentAudioURL = nil
         // Freeze the trickle in place so it doesn't keep creeping toward 95%
         // during the pill's fade-out (would visually read as success).
         pillVC?.freezeProgressAnimation()
@@ -381,10 +430,16 @@ final class DictationPipeline {
         let recordID = record.id
 
         state = .processing
+        // Arm the Esc tap so the user can cancel a long retry the same way
+        // they cancel a normal dictation.
+        hotkeyManager.isActive = true
+        // Clear any stale value left from a prior dictation so handleCancel's
+        // processing branch doesn't try to delete the (history-owned) retry wav.
+        currentAudioURL = nil
         showPill(state: .processing)
 
-        Task {
-            await processRetry(url: url, recordID: recordID, output: output)
+        processingTask = Task { [weak self] in
+            await self?.processRetry(url: url, recordID: recordID, output: output)
         }
     }
 
@@ -398,6 +453,8 @@ final class DictationPipeline {
             if raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 await MainActor.run {
                     self.state = .idle
+                    self.hotkeyManager.isActive = false
+                    self.processingTask = nil
                     self.completeAndHidePill()
                     ToastManager.shared.show(.error, message: "重试结果为空")
                 }
@@ -445,11 +502,23 @@ final class DictationPipeline {
                 try? FileManager.default.removeItem(at: url)
 
                 self.state = .idle
+                self.hotkeyManager.isActive = false
+                self.processingTask = nil
                 self.completeAndHidePill()
             }
         } catch {
+            // Esc cancellation: state + UI already cleared by handleCancel.
+            // The wav lives in history (not a temp file like processAudio's),
+            // so don't delete it — the user may still want to retry.
+            if Task.isCancelled || error is CancellationError ||
+                (error as? URLError)?.code == .cancelled {
+                print("[Pipeline] Retry cancelled (mid-flight)")
+                return
+            }
             await MainActor.run {
                 self.state = .idle
+                self.hotkeyManager.isActive = false
+                self.processingTask = nil
                 self.pillVC?.freezeProgressAnimation()
                 self.hidePill()
                 // Re-arm retry from the (still failed) record so the toast
@@ -624,11 +693,17 @@ final class DictationPipeline {
         // duration field; the per-stage latencies don't use it).
         recordingStartTime = Date().addingTimeInterval(-payload.recordDuration)
         state = .processing
+        // Mirror the real stopAndProcess() handoff so QA can exercise the
+        // Esc-cancel path against this trigger: arm the CGEvent tap, expose
+        // the in-flight Task, and stash currentAudioURL so handleCancel knows
+        // which temp file to delete.
+        hotkeyManager.isActive = true
+        currentAudioURL = tmpURL
 
         print("[DevTrigger] running pipeline with wav=\(payload.wavPath) recordDuration=\(payload.recordDuration)s")
 
-        Task {
-            await processAudio(url: tmpURL, recordDuration: payload.recordDuration)
+        processingTask = Task { [weak self] in
+            await self?.processAudio(url: tmpURL, recordDuration: payload.recordDuration)
         }
     }
     #endif

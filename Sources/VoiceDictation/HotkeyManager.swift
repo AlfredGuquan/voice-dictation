@@ -95,7 +95,8 @@ final class HotkeyManager {
 
     var onEvent: ((HotkeyEvent) -> Void)?
 
-    /// Set to true when recording is active — Esc is only intercepted during recording.
+    /// True while a dictation is in flight (recording OR processing).
+    /// Esc is only intercepted while this is set; otherwise it passes through.
     var isActive = false
 
     /// Thread-safe accessor for the active hotkey. Reads/writes are serialized
@@ -246,7 +247,8 @@ final class HotkeyManager {
 
         let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
 
-        // Esc (keyCode 53) — cancel only while recording; otherwise pass through
+        // Esc (keyCode 53) — cancel while a dictation is in flight (recording
+        // or processing). Otherwise pass through so apps see the key normally.
         if type == .keyDown && keyCode == 53 && isActive {
             DispatchQueue.main.async { [weak self] in
                 self?.onEvent?(.cancel)
