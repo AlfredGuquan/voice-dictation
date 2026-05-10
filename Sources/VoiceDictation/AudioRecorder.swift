@@ -1,7 +1,7 @@
 import AVFoundation
 import Foundation
 
-/// Records microphone audio to a WAV file (48kHz Int16 PCM).
+/// Records microphone audio to a WAV file using the input node's native format.
 final class AudioRecorder {
     private var engine: AVAudioEngine?
     private var audioFile: AVAudioFile?
@@ -31,16 +31,10 @@ final class AudioRecorder {
         let filename = "dictation_\(Int(Date().timeIntervalSince1970)).wav"
         let url = tempDir.appendingPathComponent(filename)
 
-        let settings: [String: Any] = [
-            AVFormatIDKey: kAudioFormatLinearPCM,
-            AVSampleRateKey: inputFormat.sampleRate,
-            AVNumberOfChannelsKey: inputFormat.channelCount,
-            AVLinearPCMBitDepthKey: 16,
-            AVLinearPCMIsFloatKey: false,
-            AVLinearPCMIsBigEndianKey: false,
-        ]
-
-        let file = try AVAudioFile(forWriting: url, settings: settings)
+        // file settings must match the tap buffer format — AVAudioFile.write(from:)
+        // throws when buffer.format != file.processingFormat, dropping all samples
+        // silently into the per-buffer catch below.
+        let file = try AVAudioFile(forWriting: url, settings: inputFormat.settings)
 
         inputNode.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) {
             [weak self] buffer, _ in
