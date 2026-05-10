@@ -40,6 +40,7 @@ struct ToastView: View {
                     )
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("重试")
             }
 
             if kind == .error {
@@ -50,6 +51,7 @@ struct ToastView: View {
                         .frame(width: 14, height: 14)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("关闭")
             }
         }
         .padding(.leading, 12)

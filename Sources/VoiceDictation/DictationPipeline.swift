@@ -43,9 +43,9 @@ final class DictationPipeline {
         // take effect without a restart.
         if Config.apiKey == nil {
             print("[Pipeline] WARNING: OPENAI_API_KEY not set; configure it in Settings")
-            showNotification(
-                "Voice Dictation",
-                body: "OPENAI_API_KEY not set. Open Settings to configure."
+            ToastManager.shared.show(
+                .error,
+                message: "OPENAI_API_KEY 未设置，请在设置中配置"
             )
         }
 
@@ -75,9 +75,9 @@ final class DictationPipeline {
 
         let success = hotkeyManager.start()
         if !success {
-            showNotification(
-                "Voice Dictation",
-                body: "Accessibility permission required. Grant access in System Preferences."
+            ToastManager.shared.show(
+                .error,
+                message: "缺少辅助功能权限，请在系统设置中授予"
             )
         }
 
@@ -471,23 +471,5 @@ final class DictationPipeline {
     private func stopLevelUpdates() {
         levelUpdateTimer?.invalidate()
         levelUpdateTimer = nil
-    }
-
-    // MARK: - Notifications
-
-    private func showNotification(_ title: String, body: String) {
-        let escapedBody = body
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
-        let escapedTitle = title
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        task.arguments = [
-            "-e",
-            "display notification \"\(escapedBody)\" with title \"\(escapedTitle)\"",
-        ]
-        try? task.run()
     }
 }

@@ -50,9 +50,6 @@ Commit 用 conventional commits。Branch 命名 `feat/xxx`、`fix/xxx`。
 - canBecomeKey 必须返回 false（不抢焦点）
 - create() 返回 optional（无屏幕时不崩溃）
 
-**modifying notification logic:**
-- osascript 字符串必须转义引号和反斜杠，防止注入
-
 ### Learned Constraints
 
 **adding shadows to any NSPanel / layer-backed NSView with rounded corners:**
