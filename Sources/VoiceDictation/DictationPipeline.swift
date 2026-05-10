@@ -695,10 +695,14 @@ final class DictationPipeline {
         state = .processing
         // Mirror the real stopAndProcess() handoff so QA can exercise the
         // Esc-cancel path against this trigger: arm the CGEvent tap, expose
-        // the in-flight Task, and stash currentAudioURL so handleCancel knows
-        // which temp file to delete.
+        // the in-flight Task, stash currentAudioURL so handleCancel knows
+        // which temp file to delete, and show the pill so the cancel path's
+        // hidePill / freezeProgressAnimation calls are exercised (otherwise
+        // they're no-ops against a nil pillVC and QA can't see the UI flow).
         hotkeyManager.isActive = true
         currentAudioURL = tmpURL
+        showPill(state: .processing)
+        updatePill(state: .processing)
 
         print("[DevTrigger] running pipeline with wav=\(payload.wavPath) recordDuration=\(payload.recordDuration)s")
 
