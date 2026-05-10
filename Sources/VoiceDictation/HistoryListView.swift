@@ -31,6 +31,7 @@ struct HistoryListView: View {
                             .font(.system(size: 12))
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("清除搜索")
                 }
             }
             .padding(.horizontal, 12)
@@ -153,8 +154,14 @@ struct HistoryCardView: View {
                             }
                         }
                         .foregroundColor(showCopied ? Theme.confirm : Theme.textSecondary)
+                        // padding turns the gap between icon and text into hit area
+                        // (.plain buttons hit-test visible pixels only).
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 2)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("复制")
                 }
 
                 if let retry = onRetry {
@@ -166,8 +173,12 @@ struct HistoryCardView: View {
                                 .font(.system(size: 11))
                         }
                         .foregroundColor(Theme.accent)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 2)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("重试")
                 }
 
                 Button(action: onDelete) {
@@ -176,6 +187,7 @@ struct HistoryCardView: View {
                         .foregroundColor(Theme.textTertiary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("删除")
             }
         }
         .padding(14)

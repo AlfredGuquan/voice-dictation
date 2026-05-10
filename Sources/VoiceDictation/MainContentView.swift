@@ -95,6 +95,7 @@ struct MainContentView: View {
             .cornerRadius(8)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(section.rawValue)
         .padding(.horizontal, 8)
     }
 

@@ -2,9 +2,7 @@ import Cocoa
 import SwiftUI
 
 /// App-internal floating toast manager (F5).
-/// Runtime errors/info surface here instead of macOS notification center.
-/// Startup errors (missing API key, missing accessibility) keep using osascript
-/// because the toast render path isn't reliable during early app launch.
+/// All app-originated errors (startup + runtime) surface here.
 final class ToastManager {
 
     enum Kind {
