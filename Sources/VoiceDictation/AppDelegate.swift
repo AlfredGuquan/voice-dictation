@@ -5,6 +5,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var mainWindowController: MainWindowController?
     private var hotkeyStatusMenuItem: NSMenuItem?
+    private var openWindowHotkeyStatusMenuItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Menu bar icon
@@ -34,10 +35,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             name: .hotkeyConfigChanged,
             object: nil
         )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(refreshOpenWindowHotkey),
+            name: .openWindowHotkeyChanged,
+            object: nil
+        )
 
         // Start the dictation pipeline
         pipeline.start()
         refreshHotkeyStatusLabel()
+        registerOpenWindowHotkey()
+    }
+
+    @objc private func refreshOpenWindowHotkey() {
+        registerOpenWindowHotkey()
+        refreshOpenWindowHotkeyLabel()
+    }
+
+    private func registerOpenWindowHotkey() {
+        if let chord = Config.openWindowHotkey {
+            GlobalShortcuts.shared.register(chord: chord) { [weak self] in
+                self?.mainWindowController?.toggleWindow()
+            }
+        } else {
+            GlobalShortcuts.shared.unregister()
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -76,12 +99,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(statusMenuItem)
         hotkeyStatusMenuItem = statusMenuItem
 
+        let openWindowItemLabel = NSMenuItem(
+            title: "开窗快捷键：未设置",
+            action: nil,
+            keyEquivalent: ""
+        )
+        openWindowItemLabel.isEnabled = false
+        menu.addItem(openWindowItemLabel)
+        openWindowHotkeyStatusMenuItem = openWindowItemLabel
+
         menu.addItem(NSMenuItem.separator())
         menu.addItem(
             NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         )
 
         statusItem?.menu = menu
+
+        refreshOpenWindowHotkeyLabel()
     }
 
     @objc private func openMainWindow() {
@@ -91,6 +125,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func refreshHotkeyStatusLabel() {
         let name = Config.hotkey.displayName
         hotkeyStatusMenuItem?.title = "Press \(name) to dictate"
+    }
+
+    private func refreshOpenWindowHotkeyLabel() {
+        if let hotkey = Config.openWindowHotkey {
+            openWindowHotkeyStatusMenuItem?.title = "开窗快捷键：\(hotkey.displayName)"
+        } else {
+            openWindowHotkeyStatusMenuItem?.title = "开窗快捷键：未设置（点设置配置）"
+        }
     }
 
     @objc private func openSettings() {

@@ -34,7 +34,8 @@ DispatchSource 监听文件变更，热加载。
 | main.swift | 入口，accessory app 策略 | AppKit |
 | AppDelegate.swift | 菜单栏 status item + 主窗口入口 | AppKit |
 | DictationPipeline.swift | 听写状态机编排器 | — |
-| HotkeyManager.swift | CGEvent tap 全局热键 | CoreGraphics |
+| HotkeyManager.swift | CGEvent tap 全局热键（听写 hotkey，含单修饰键模式） | CoreGraphics |
+| GlobalShortcuts.swift | Carbon RegisterEventHotKey 单 chord（开主窗口） | Carbon.HIToolbox |
 | AudioRecorder.swift | AVAudioEngine 麦克风录音 + RMS 测量 | AVFoundation |
 | WhisperService.swift | OpenAI Whisper API 调用 | Foundation (URLSession) |
 | LLMCleanupService.swift | GPT-4o-mini 清洗 + 词库 prompt 注入 | Foundation (URLSession) |

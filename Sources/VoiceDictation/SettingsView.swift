@@ -24,6 +24,14 @@ struct SettingsView: View {
                         }
 
                         HStack {
+                            Text("打开主窗口")
+                                .font(.system(size: 13))
+                                .foregroundColor(Theme.textPrimary)
+                            Spacer()
+                            OpenWindowHotkeyRecorderControl()
+                        }
+
+                        HStack {
                             Text("取消录音")
                                 .font(.system(size: 13))
                                 .foregroundColor(Theme.textPrimary)
@@ -507,5 +515,203 @@ private extension NSEvent {
         if modifierFlags.contains(.control)   { out.insert(.maskControl) }
         if modifierFlags.contains(.capsLock)  { out.insert(.maskAlphaShift) }
         return out
+    }
+}
+
+// MARK: - Open-window hotkey recorder
+//
+// Sibling of HotkeyRecorderControl; differs in three ways:
+//   1) Persists to Config.openWindowHotkey (optional, nil = unset)
+//   2) Rejects single-modifier — only chords commit. Bare modifiers like
+//      Cmd alone would trigger constantly, and the chord tap also can't
+//      coexist with the dictation single-modifier on the same key.
+//   3) Surfaces extra warnings: chord containing ⌥ collides with the
+//      dictation singleModifier(rightOption) tap; chord identical to the
+//      dictation hotkey is a hard collision.
+private struct OpenWindowHotkeyRecorderControl: View {
+    private enum Phase: Equatable {
+        case idle
+        case recording
+        case justSaved
+    }
+
+    @State private var currentHotkey: HotkeyManager.HotkeyType? = Config.openWindowHotkey
+    @State private var phase: Phase = .idle
+    @State private var eventMonitor: Any?
+    @State private var conflictHint: String? = nil
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 4) {
+            HStack(spacing: 6) {
+                Button(action: beginRecording) {
+                    Text(chipText)
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundColor(chipForeground)
+                        .frame(minWidth: 140, minHeight: 26)
+                        .padding(.horizontal, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .fill(chipBackground)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .stroke(borderColor, lineWidth: phase == .idle && !hasConflict ? 1 : 1.5)
+                        )
+                }
+                .buttonStyle(.plain)
+                .disabled(phase == .recording)
+
+                if phase != .recording && currentHotkey != nil {
+                    Button(action: clear) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 13))
+                            .foregroundColor(Theme.textTertiary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("清除")
+                }
+            }
+
+            if let hint = conflictHint {
+                Text(hint)
+                    .font(.system(size: 11))
+                    .foregroundColor(Theme.warn)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 260, alignment: .trailing)
+            }
+        }
+        .onDisappear { endRecording(cancelled: true) }
+    }
+
+    private var hasConflict: Bool {
+        conflictHint != nil && phase != .recording
+    }
+
+    private var chipText: String {
+        switch phase {
+        case .idle, .justSaved:
+            return currentHotkey?.displayName ?? "未设置"
+        case .recording:
+            return "按下要录制的键…"
+        }
+    }
+
+    private var chipForeground: Color {
+        switch phase {
+        case .idle:      return hasConflict ? Theme.warn : (currentHotkey == nil ? Theme.textTertiary : Theme.textSecondary)
+        case .recording: return Theme.accent
+        case .justSaved: return hasConflict ? Theme.warn : Theme.confirm
+        }
+    }
+
+    private var chipBackground: Color {
+        if hasConflict { return Theme.warnBg }
+        switch phase {
+        case .idle:      return Theme.bgSurface
+        case .recording: return Theme.bgSurface
+        case .justSaved: return Theme.confirmBg
+        }
+    }
+
+    private var borderColor: Color {
+        if hasConflict { return Theme.warn }
+        switch phase {
+        case .idle:      return Theme.border
+        case .recording: return Theme.accent
+        case .justSaved: return Theme.confirm
+        }
+    }
+
+    private func beginRecording() {
+        guard phase != .recording else { return }
+        phase = .recording
+        conflictHint = nil
+
+        NotificationCenter.default.post(name: .hotkeyCaptureBegin, object: nil)
+
+        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .flagsChanged]) { event in
+            handleEvent(event)
+            return nil
+        }
+    }
+
+    private func endRecording(cancelled: Bool) {
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+            eventMonitor = nil
+            NotificationCenter.default.post(name: .hotkeyCaptureEnd, object: nil)
+        }
+        if cancelled {
+            phase = .idle
+        }
+    }
+
+    private func handleEvent(_ event: NSEvent) {
+        // Esc cancels.
+        if event.type == .keyDown && event.keyCode == 53 {
+            endRecording(cancelled: true)
+            return
+        }
+
+        let keyCode = Int64(event.keyCode)
+        let mask: CGEventFlags = [.maskCommand, .maskShift, .maskAlternate, .maskControl]
+        let pressed = event.cgFlags.intersection(mask)
+
+        // Single modifier alone is ignored — the open-window hotkey requires a
+        // chord. We just keep the recorder open until they press a key.
+        if event.type == .flagsChanged { return }
+
+        if event.type == .keyDown {
+            guard !pressed.isEmpty else { return }  // bare letter — wait for modifier
+            commit(.chord(keyCode: keyCode, modifiers: pressed.rawValue))
+        }
+    }
+
+    private func commit(_ hotkey: HotkeyManager.HotkeyType) {
+        endRecording(cancelled: false)
+        currentHotkey = hotkey
+        Config.openWindowHotkey = hotkey
+        conflictHint = warningFor(hotkey)
+        NotificationCenter.default.post(name: .openWindowHotkeyChanged, object: nil)
+
+        phase = .justSaved
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            if phase == .justSaved { phase = .idle }
+        }
+    }
+
+    private func clear() {
+        currentHotkey = nil
+        Config.openWindowHotkey = nil
+        conflictHint = nil
+        NotificationCenter.default.post(name: .openWindowHotkeyChanged, object: nil)
+    }
+
+    /// Returns a non-nil warning string if `hotkey` is going to fight with
+    /// either macOS or the dictation hotkey.
+    private func warningFor(_ hotkey: HotkeyManager.HotkeyType) -> String? {
+        guard case .chord(_, let mods) = hotkey else { return nil }
+        let cg = CGEventFlags(rawValue: mods)
+
+        // Conflict with dictation (right Option singleModifier): any chord
+        // that includes ⌥ will briefly trigger the dictation hotkey on the
+        // way to firing this chord.
+        if cg.contains(.maskAlternate),
+           case .singleModifier(let dictKC) = Config.hotkey,
+           dictKC == 61 || dictKC == 58 {
+            return "包含 ⌥ — 按下时会瞬间触发听写"
+        }
+
+        // Identical to the dictation hotkey.
+        if hotkey == Config.hotkey {
+            return "与听写快捷键相同"
+        }
+
+        // Fall through to the static known-conflicts list.
+        if let desc = HotkeyManager.conflictDescription(for: hotkey) {
+            return "此快捷键与 \(desc) 冲突 — 本应用将优先响应"
+        }
+
+        return nil
     }
 }

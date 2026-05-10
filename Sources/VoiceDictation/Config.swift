@@ -44,6 +44,40 @@ enum Config {
             }
         }
     }
+
+    // MARK: - Open-window hotkey
+
+    private static let openWindowHotkeyDefaultsKey = "openWindowHotkey"
+
+    /// Optional global hotkey to bring the main window forward. Nil = unset
+    /// (no global shortcut registered). Distinct from the dictation hotkey;
+    /// must be a chord (single-modifier rejected at the SettingsView layer).
+    static var openWindowHotkey: HotkeyManager.HotkeyType? {
+        get {
+            guard
+                let data = UserDefaults.standard.data(forKey: openWindowHotkeyDefaultsKey),
+                let decoded = try? JSONDecoder().decode(HotkeyManager.HotkeyType.self, from: data)
+            else {
+                return nil
+            }
+            return decoded
+        }
+        set {
+            if let newValue = newValue {
+                do {
+                    let data = try JSONEncoder().encode(newValue)
+                    UserDefaults.standard.set(data, forKey: openWindowHotkeyDefaultsKey)
+                } catch {
+                    print("[Config] Failed to encode openWindowHotkey \(newValue): \(error)")
+                    #if DEBUG
+                    assertionFailure("Config.openWindowHotkey encode failed: \(error)")
+                    #endif
+                }
+            } else {
+                UserDefaults.standard.removeObject(forKey: openWindowHotkeyDefaultsKey)
+            }
+        }
+    }
 }
 
 /// Posted by SettingsView after writing a new hotkey into Config.
@@ -56,4 +90,7 @@ extension Notification.Name {
     static let hotkeyCaptureBegin = Notification.Name("voice-dictation.hotkeyCaptureBegin")
     /// Posted when the Settings hotkey recorder exits recording mode.
     static let hotkeyCaptureEnd = Notification.Name("voice-dictation.hotkeyCaptureEnd")
+    /// Posted by SettingsView after writing Config.openWindowHotkey.
+    /// AppDelegate listens and re-registers the Carbon event hotkey.
+    static let openWindowHotkeyChanged = Notification.Name("voice-dictation.openWindowHotkeyChanged")
 }
