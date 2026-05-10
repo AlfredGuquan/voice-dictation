@@ -105,6 +105,10 @@ final class DictationPipeline {
         )
 
         print("[Pipeline] Ready. Press \(hotkeyManager.currentHotkey.displayName) to dictate.")
+
+        #if DEBUG
+        startDevTriggerPolling()
+        #endif
     }
 
     @objc private func hotkeyConfigDidChange() {
@@ -535,4 +539,97 @@ final class DictationPipeline {
         levelUpdateTimer?.invalidate()
         levelUpdateTimer = nil
     }
+
+    // MARK: - Dev trigger (DEBUG-only headless QA hook)
+    //
+    // QA agents can't simulate the right-Option flagsChanged event that the
+    // dictation hotkey listens for. To unblock end-to-end verification we
+    // poll a well-known JSON file in /tmp; when it appears we run the
+    // ASR + LLM + inject pipeline against a pre-recorded WAV from the file.
+    //
+    // Trigger contract (DEBUG only):
+    //   echo '{"wavPath":"/path/to/audio.wav","recordDuration":2.0}' \
+    //     > /tmp/voice-dictation-trigger.json
+    //
+    // The agent should ensure the wav exists; on parse error or missing wav
+    // we log and clear the trigger file so a retry isn't blocked.
+
+    #if DEBUG
+    private struct DevTriggerPayload: Decodable {
+        let wavPath: String
+        let recordDuration: Double
+    }
+
+    private static let devTriggerPath = "/tmp/voice-dictation-trigger.json"
+    private var devTriggerTimer: Timer?
+
+    private func startDevTriggerPolling() {
+        // Clear any leftover trigger from a previous run so we don't fire
+        // immediately with stale data.
+        try? FileManager.default.removeItem(atPath: Self.devTriggerPath)
+
+        devTriggerTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) {
+            [weak self] _ in
+            self?.checkDevTrigger()
+        }
+        print("[DevTrigger] polling \(Self.devTriggerPath) (DEBUG only)")
+    }
+
+    private func checkDevTrigger() {
+        let path = Self.devTriggerPath
+        guard FileManager.default.fileExists(atPath: path) else { return }
+
+        // Always remove the trigger file on any path — parse failure or busy
+        // state shouldn't strand it for the next tick.
+        defer {
+            try? FileManager.default.removeItem(atPath: path)
+        }
+
+        guard state == .idle else {
+            print("[DevTrigger] pipeline busy (state=\(state)), ignoring trigger")
+            return
+        }
+
+        let url = URL(fileURLWithPath: path)
+        let payload: DevTriggerPayload
+        do {
+            let data = try Data(contentsOf: url)
+            payload = try JSONDecoder().decode(DevTriggerPayload.self, from: data)
+        } catch {
+            print("[DevTrigger] parse error: \(error)")
+            return
+        }
+
+        guard FileManager.default.fileExists(atPath: payload.wavPath) else {
+            print("[DevTrigger] wav not found: \(payload.wavPath)")
+            return
+        }
+
+        // Copy to a temp WAV so processAudio can delete it without touching
+        // the agent's fixture file.
+        let tmpURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("dev_trigger_\(UUID().uuidString).wav")
+        do {
+            try FileManager.default.copyItem(
+                at: URL(fileURLWithPath: payload.wavPath),
+                to: tmpURL
+            )
+        } catch {
+            print("[DevTrigger] copy failed: \(error)")
+            return
+        }
+
+        // Synthesize a recordingStartTime so processAudio's totalDuration
+        // bookkeeping has a reasonable origin (it's added to the legacy
+        // duration field; the per-stage latencies don't use it).
+        recordingStartTime = Date().addingTimeInterval(-payload.recordDuration)
+        state = .processing
+
+        print("[DevTrigger] running pipeline with wav=\(payload.wavPath) recordDuration=\(payload.recordDuration)s")
+
+        Task {
+            await processAudio(url: tmpURL, recordDuration: payload.recordDuration)
+        }
+    }
+    #endif
 }

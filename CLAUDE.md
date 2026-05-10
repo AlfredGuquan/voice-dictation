@@ -82,6 +82,13 @@ Commit 用 conventional commits。Branch 命名 `feat/xxx`、`fix/xxx`。
 - 用自写 Unicode scalar 切分：CJK 按字、Latin/digit 按连续 run。30 行无依赖（见 specs/tracer/v03-findings-code.md F8）
 - 视觉上的"词粒度"由 LCS 后的连续段合并实现，不需要在切分阶段聚合词
 
+**triggering a full dictation flow without a microphone (QA / headless verification):**
+- DEBUG build 启动时 `DictationPipeline` 起 0.2s polling 监听 `/tmp/voice-dictation-trigger.json`
+- 触发：`echo '{"wavPath":"/path/to.wav","recordDuration":2.0}' > /tmp/voice-dictation-trigger.json`
+- 跳过 `audioRecorder`，直接 `processAudio(url:recordDuration:)` 跑 ASR + LLM + 注入完整链路并写 history record
+- 触发文件无论成功失败都会被删除（含 JSON 解析错、wav 不存在、pipeline busy）；启动时也清掉遗留文件，避免重启时重放
+- 仅 DEBUG，release build 完全不编译这段逻辑
+
 **adding a second global hotkey alongside the dictation tap:**
 - 不要扩展 HotkeyManager（单值 + 单 CGEventTap 假设深，会牵动锁/状态机）；新增独立模块走 Carbon `RegisterEventHotKey`，accessory app 后台仍触发
 - chord 含 ⌥ 会和 singleModifier(rightOption) 听写互踩——CGEventTap 在按下 ⌥ 那一帧先触发 singleModifierDown（pressedModifiers == [⌥]），再按 Shift 时触发 singleModifierUp（pressedModifiers ≠ [⌥]）→ 一次开窗瞬间触发"录音 + 立刻停止处理空音频"。Settings 录入要 warn `包含 ⌥ — 按下时会瞬间触发听写`
