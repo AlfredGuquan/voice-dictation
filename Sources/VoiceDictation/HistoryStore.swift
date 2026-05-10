@@ -6,6 +6,13 @@ import Foundation
 final class HistoryStore: ObservableObject {
 
     /// A single dictation record.
+    ///
+    /// `duration` is the legacy mixed-meaning field (recording start →
+    /// just-before-inject) kept for backwards compatibility with old
+    /// history.json files. New records also fill the four explicit
+    /// per-stage fields below; the UI prefers them and falls back to
+    /// `duration` when they are nil (= record predates the change, or
+    /// failed before the stage completed).
     struct Record: Codable, Identifiable, Equatable {
         let id: UUID
         var rawTranscript: String
@@ -14,6 +21,11 @@ final class HistoryStore: ObservableObject {
         var duration: TimeInterval
         var audioFilePath: String?
         var status: Status
+
+        var recordDuration: TimeInterval?
+        var asrLatency: TimeInterval?
+        var llmLatency: TimeInterval?
+        var injectLatency: TimeInterval?
 
         enum Status: String, Codable {
             case success
@@ -27,7 +39,11 @@ final class HistoryStore: ObservableObject {
             timestamp: Date = Date(),
             duration: TimeInterval,
             audioFilePath: String? = nil,
-            status: Status = .success
+            status: Status = .success,
+            recordDuration: TimeInterval? = nil,
+            asrLatency: TimeInterval? = nil,
+            llmLatency: TimeInterval? = nil,
+            injectLatency: TimeInterval? = nil
         ) {
             self.id = id
             self.rawTranscript = rawTranscript
@@ -36,6 +52,10 @@ final class HistoryStore: ObservableObject {
             self.duration = duration
             self.audioFilePath = audioFilePath
             self.status = status
+            self.recordDuration = recordDuration
+            self.asrLatency = asrLatency
+            self.llmLatency = llmLatency
+            self.injectLatency = injectLatency
         }
 
         /// A record can be retried only if the audio is still on disk.

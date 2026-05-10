@@ -122,18 +122,13 @@ struct HistoryCardView: View {
                     .multilineTextAlignment(.leading)
             }
 
-            // Bottom row: timestamp + duration + actions
-            HStack {
+            // Bottom row: timestamp + timing badges + actions
+            HStack(spacing: 8) {
                 Text(formatTimestamp(record.timestamp))
                     .font(.system(size: 11))
                     .foregroundColor(Theme.textTertiary)
 
-                Text("·")
-                    .foregroundColor(Theme.textTertiary)
-
-                Text(formatDuration(record.duration))
-                    .font(.system(size: 11))
-                    .foregroundColor(Theme.textTertiary)
+                TimingBadgeRow(record: record)
 
                 Spacer()
 
@@ -216,13 +211,162 @@ struct HistoryCardView: View {
             return formatter.string(from: date)
         }
     }
+}
 
-    private func formatDuration(_ duration: TimeInterval) -> String {
-        let seconds = Int(duration)
-        if seconds < 60 {
-            return "\(seconds)秒"
-        } else {
-            return "\(seconds / 60)分\(seconds % 60)秒"
+/// Two-capsule timing summary for a history card (variant B).
+/// 🎙 录音 capsule + ⚙ 处理 capsule. Falls back gracefully when latency
+/// fields are missing (old records pre-dating the per-stage timing change,
+/// or failed records where a stage never completed).
+private struct TimingBadgeRow: View {
+    let record: HistoryStore.Record
+
+    var body: some View {
+        HStack(spacing: 5) {
+            if let rec = record.recordDuration {
+                TimingBadge(
+                    sfSymbol: "mic.fill",
+                    text: formatLatency(rec),
+                    style: .record
+                )
+            } else if record.status == .success {
+                // Old success record without per-stage data — collapse to one
+                // neutral pill showing the legacy total duration.
+                TimingBadge(
+                    sfSymbol: "clock",
+                    text: formatLatency(record.duration),
+                    style: .fallback
+                )
+            }
+
+            switch record.status {
+            case .success:
+                if let processing = processingLatency {
+                    TimingBadge(
+                        sfSymbol: "gearshape.fill",
+                        text: formatLatency(processing),
+                        style: .process
+                    )
+                }
+            case .failed:
+                TimingBadge(
+                    sfSymbol: "xmark",
+                    text: "失败",
+                    style: .failed
+                )
+            }
         }
     }
+
+    /// Sum of the per-stage processing latencies, or nil if none recorded.
+    private var processingLatency: TimeInterval? {
+        let parts: [TimeInterval] = [
+            record.asrLatency,
+            record.llmLatency,
+            record.injectLatency
+        ].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.reduce(0, +)
+    }
+
+    private func formatLatency(_ s: TimeInterval) -> String {
+        if s < 10 { return String(format: "%.1fs", s) }
+        if s < 60 { return String(format: "%.0fs", s) }
+        let m = Int(s) / 60
+        let r = Int(s) % 60
+        return "\(m)m\(r)s"
+    }
+}
+
+/// One capsule badge in the timing row. Uses Theme tokens; tints derive from
+/// the existing cancel (orange) / confirm (green) / warn (amber) palette so
+/// the badges stay visually consistent with the rest of the app.
+struct TimingBadge: View {
+    enum Style {
+        case record    // 录音 — warm orange (cancel hue, low opacity)
+        case process   // 处理 — muted green (confirm hue)
+        case asr       // ASR — confirm green (detail row)
+        case llm       // LLM — warn amber (detail row)
+        case inject    // 注入 — neutral grey (detail row)
+        case total     // 总 — filled dark (detail row, anchor)
+        case failed    // 失败 — warn amber
+        case fallback  // 旧记录无分段 — neutral grey
+    }
+
+    let sfSymbol: String?
+    let text: String
+    let style: Style
+
+    init(sfSymbol: String? = nil, text: String, style: Style) {
+        self.sfSymbol = sfSymbol
+        self.text = text
+        self.style = style
+    }
+
+    var body: some View {
+        HStack(spacing: 4) {
+            if let sfSymbol = sfSymbol {
+                Image(systemName: sfSymbol)
+                    .font(.system(size: 9, weight: .semibold))
+            }
+            Text(text)
+                .font(.system(size: 10.5, weight: .medium, design: .monospaced))
+        }
+        .foregroundColor(foreground)
+        .padding(.leading, sfSymbol == nil ? 8 : 6)
+        .padding(.trailing, 8)
+        .padding(.vertical, 3)
+        .background(
+            Capsule(style: .continuous).fill(background)
+        )
+        .overlay(
+            Capsule(style: .continuous).stroke(borderColor, lineWidth: 1)
+        )
+    }
+
+    private var foreground: Color {
+        switch style {
+        case .record:   return Theme.cancel
+        case .process:  return Theme.confirm
+        case .asr:      return Theme.confirm
+        case .llm:      return Theme.warn
+        case .inject:   return Theme.textSecondary
+        case .total:    return Theme.bgDeep
+        case .failed:   return Theme.warn
+        case .fallback: return Theme.textSecondary
+        }
+    }
+
+    private var background: Color {
+        switch style {
+        case .record:   return Theme.cancel.opacity(0.09)
+        case .process:  return Theme.confirm.opacity(0.10)
+        case .asr:      return Theme.confirm.opacity(0.10)
+        case .llm:      return Theme.warnBg
+        case .inject:   return Theme.textSecondary.opacity(0.10)
+        case .total:    return Theme.textPrimary
+        case .failed:   return Theme.warnBg
+        case .fallback: return Theme.bgSurface
+        }
+    }
+
+    private var borderColor: Color {
+        switch style {
+        case .record:   return Theme.cancel.opacity(0.18)
+        case .process:  return Theme.confirm.opacity(0.22)
+        case .asr:      return Theme.confirm.opacity(0.22)
+        case .llm:      return Theme.warn.opacity(0.24)
+        case .inject:   return Theme.textSecondary.opacity(0.20)
+        case .total:    return Theme.textPrimary
+        case .failed:   return Theme.warn.opacity(0.22)
+        case .fallback: return Theme.border
+        }
+    }
+}
+
+/// Latency formatter shared between card and detail rows.
+func formatLatencyShort(_ s: TimeInterval) -> String {
+    if s < 10 { return String(format: "%.1fs", s) }
+    if s < 60 { return String(format: "%.0fs", s) }
+    let m = Int(s) / 60
+    let r = Int(s) % 60
+    return "\(m)m\(r)s"
 }

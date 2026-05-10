@@ -190,22 +190,31 @@ final class DictationPipeline {
             return
         }
 
+        // Capture the mic-off moment so processAudio can attribute the record
+        // duration (mic on → mic off) separately from ASR / LLM / inject latency.
+        let recordSeconds = recordingStartTime.map { Date().timeIntervalSince($0) } ?? 0
+
         currentAudioURL = audioURL
         updatePill(state: .processing)
 
         // Run ASR + cleanup pipeline
         Task {
-            await processAudio(url: audioURL)
+            await processAudio(url: audioURL, recordDuration: recordSeconds)
         }
     }
 
     // MARK: - Processing pipeline
 
-    private func processAudio(url: URL) async {
+    private func processAudio(url: URL, recordDuration: TimeInterval) async {
+        var asrLatency: TimeInterval?
+        var llmLatency: TimeInterval?
+
         do {
             // Step 1: Transcribe
             print("[Pipeline] Transcribing...")
+            let asrStart = Date()
             let transcription = try await whisperService.transcribe(fileURL: url)
+            asrLatency = Date().timeIntervalSince(asrStart)
             let rawText = transcription.text
 
             if rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -221,10 +230,12 @@ final class DictationPipeline {
 
             // Step 2: Cleanup (with personal vocabulary)
             print("[Pipeline] Cleaning up...")
+            let llmStart = Date()
             let cleanedText = try await cleanupService.cleanup(
                 rawText: rawText,
                 vocabulary: self.vocabularyStore.current
             )
+            llmLatency = Date().timeIntervalSince(llmStart)
 
             if cleanedText.isEmpty {
                 await MainActor.run {
@@ -236,18 +247,32 @@ final class DictationPipeline {
                 return
             }
 
-            // Step 3: Inject text
-            let duration = self.recordingStartTime.map { Date().timeIntervalSince($0) } ?? 0
+            // Step 3: Inject text (synchronous, on main)
+            let totalDuration = self.recordingStartTime.map { Date().timeIntervalSince($0) } ?? 0
+            let recSeconds = recordDuration
+            let asr = asrLatency
+            let llm = llmLatency
             await MainActor.run {
                 print("[Pipeline] Injecting: \(cleanedText)")
+                let injectStart = Date()
                 TextInjector.inject(cleanedText)
+                let injectLatency = Date().timeIntervalSince(injectStart)
+
+                print(String(
+                    format: "[Pipeline] timing: rec=%.2fs asr=%.2fs llm=%.2fs inject=%.2fs",
+                    recSeconds, asr ?? 0, llm ?? 0, injectLatency
+                ))
 
                 // Save to history
                 let record = HistoryStore.Record(
                     rawTranscript: rawText,
                     cleanedText: cleanedText,
-                    duration: duration,
-                    status: .success
+                    duration: totalDuration,
+                    status: .success,
+                    recordDuration: recSeconds,
+                    asrLatency: asr,
+                    llmLatency: llm,
+                    injectLatency: injectLatency
                 )
                 self.historyStore.addRecord(record)
 
@@ -259,13 +284,29 @@ final class DictationPipeline {
             try? FileManager.default.removeItem(at: url)
 
         } catch {
+            // Capture by value so the @MainActor.run closure doesn't reach
+            // back into our mutable locals (sendable-closure rule).
+            let capturedAsr = asrLatency
+            let capturedLlm = llmLatency
             await MainActor.run {
-                handleError(error.localizedDescription, audioURL: url)
+                handleError(
+                    error.localizedDescription,
+                    audioURL: url,
+                    recordDuration: recordDuration,
+                    asrLatency: capturedAsr,
+                    llmLatency: capturedLlm
+                )
             }
         }
     }
 
-    private func handleError(_ message: String, audioURL: URL) {
+    private func handleError(
+        _ message: String,
+        audioURL: URL,
+        recordDuration: TimeInterval,
+        asrLatency: TimeInterval?,
+        llmLatency: TimeInterval?
+    ) {
         print("[Pipeline] Error: \(message)")
         state = .idle
         // Freeze the trickle in place so it doesn't keep creeping toward 95%
@@ -277,12 +318,18 @@ final class DictationPipeline {
 
         // Save audio to history for retry
         if let historyURL = audioRecorder.moveToHistory(audioURL) {
+            // Record latency for stages that completed before the failure —
+            // helps diagnose "is it ASR or LLM that's slow / timing out".
             let record = HistoryStore.Record(
                 rawTranscript: "",
                 cleanedText: "",
                 duration: duration,
                 audioFilePath: historyURL.path,
-                status: .failed
+                status: .failed,
+                recordDuration: recordDuration,
+                asrLatency: asrLatency,
+                llmLatency: llmLatency,
+                injectLatency: nil
             )
             let recordID = record.id
             historyStore.addRecord(record)
@@ -339,7 +386,9 @@ final class DictationPipeline {
 
     private func processRetry(url: URL, recordID: UUID, output: RetryOutput) async {
         do {
+            let asrStart = Date()
             let transcription = try await whisperService.transcribe(fileURL: url)
+            let asrLatency = Date().timeIntervalSince(asrStart)
             let raw = transcription.text
 
             if raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -351,12 +400,15 @@ final class DictationPipeline {
                 return
             }
 
+            let llmStart = Date()
             let cleaned = try await cleanupService.cleanup(
                 rawText: raw,
                 vocabulary: self.vocabularyStore.current
             )
+            let llmLatency = Date().timeIntervalSince(llmStart)
 
             await MainActor.run {
+                let injectStart = Date()
                 switch output {
                 case .inject:
                     TextInjector.inject(cleaned)
@@ -366,14 +418,25 @@ final class DictationPipeline {
                     pb.setString(cleaned, forType: .string)
                     ToastManager.shared.show(.info, message: "已复制到剪贴板")
                 }
+                let injectLatency = Date().timeIntervalSince(injectStart)
+
+                print(String(
+                    format: "[Pipeline] retry timing: asr=%.2fs llm=%.2fs inject=%.2fs",
+                    asrLatency, llmLatency, injectLatency
+                ))
 
                 // Upgrade the record in place. Drop audioFilePath since the
                 // wav is about to be deleted — `isRetryable` will then read false.
+                // Overwrite the per-stage latencies with this retry's numbers
+                // (recordDuration is preserved — the user didn't re-record).
                 self.historyStore.updateRecord(id: recordID) { rec in
                     rec.rawTranscript = raw
                     rec.cleanedText = cleaned
                     rec.status = .success
                     rec.audioFilePath = nil
+                    rec.asrLatency = asrLatency
+                    rec.llmLatency = llmLatency
+                    rec.injectLatency = injectLatency
                 }
                 try? FileManager.default.removeItem(at: url)
 
