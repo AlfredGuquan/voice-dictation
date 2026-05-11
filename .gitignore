@@ -11,3 +11,7 @@
 
 # QA screenshots — stay local, may contain desktop/environment context
 screenshots/
+
+# Speedtest fixture audio — regenerable via eval/speedtest/generate_test_audio.sh
+eval/speedtest/*.wav
+eval/speedtest/*.aiff

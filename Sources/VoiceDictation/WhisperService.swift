@@ -61,7 +61,7 @@ final class WhisperService {
 
         let (data, response): (Data, URLResponse)
         do {
-            (data, response) = try await URLSession.shared.data(for: request)
+            (data, response) = try await NetworkClient.session.data(for: request)
         } catch {
             throw WhisperError.networkError(error.localizedDescription)
         }

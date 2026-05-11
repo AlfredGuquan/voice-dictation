@@ -45,6 +45,35 @@ enum Config {
         }
     }
 
+    // MARK: - LLM cleanup mode
+
+    /// Whether to run GPT-4o-mini cleanup on the raw transcript.
+    /// - `.always`: always call the cleanup model (historical behavior).
+    /// - `.auto`:   skip cleanup when the raw transcript has no fillers, no
+    ///              obvious repeats, and the vocabulary store has no
+    ///              replacements to apply. Falls back to calling otherwise.
+    /// - `.never`:  never call cleanup; paste the raw Whisper output.
+    ///
+    /// Resolution order: `VD_CLEANUP_MODE` env var → UserDefaults → `.auto`.
+    /// Env var is intended for bench/A-B; UserDefaults is for future Settings UI.
+    enum CleanupMode: String {
+        case always
+        case auto
+        case never
+    }
+
+    static var cleanupMode: CleanupMode {
+        if let env = ProcessInfo.processInfo.environment["VD_CLEANUP_MODE"],
+           let mode = CleanupMode(rawValue: env) {
+            return mode
+        }
+        if let stored = UserDefaults.standard.string(forKey: "cleanupMode"),
+           let mode = CleanupMode(rawValue: stored) {
+            return mode
+        }
+        return .auto
+    }
+
     // MARK: - Open-window hotkey
 
     private static let openWindowHotkeyDefaultsKey = "openWindowHotkey"

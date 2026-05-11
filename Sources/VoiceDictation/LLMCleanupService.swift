@@ -57,6 +57,39 @@ final class LLMCleanupService {
         return prompt
     }
 
+    /// Heuristic: when the raw transcript has no filler words, no obvious
+    /// 3+ character repeats, and there are no vocabulary substitutions to
+    /// apply, GPT cleanup is essentially a no-op — the user-visible diff is
+    /// zero but we pay a ~4s LLM round trip. Returns `true` when we can
+    /// safely skip cleanup and paste the raw text directly.
+    static func canSkipCleanup(rawText: String, vocabulary: VocabularyStore.Vocabulary?) -> Bool {
+        // Replacements only require LLM when the transcript actually contains
+        // a key the user wants substituted. An untriggered entry shouldn't
+        // force a 4s round trip.
+        if let vocab = vocabulary {
+            for key in vocab.replacements.keys where rawText.contains(key) {
+                return false
+            }
+        }
+        let fillers = ["嗯", "啊", "哦", "呃", "就是说", "那个", "然后", "就是", "对对对", "是的是的"]
+        for filler in fillers {
+            if rawText.contains(filler) { return false }
+        }
+        // 3+ identical CJK chars in a row indicates a stutter/repeat that
+        // cleanup would collapse.
+        let chars = Array(rawText)
+        var run = 1
+        for i in 1..<chars.count {
+            if chars[i] == chars[i-1] && chars[i].isCJKIdeograph {
+                run += 1
+                if run >= 3 { return false }
+            } else {
+                run = 1
+            }
+        }
+        return true
+    }
+
     /// Clean up raw transcription text, optionally applying personal vocabulary.
     func cleanup(rawText: String, vocabulary: VocabularyStore.Vocabulary? = nil) async throws -> String {
         if rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -87,7 +120,7 @@ final class LLMCleanupService {
 
         let (data, response): (Data, URLResponse)
         do {
-            (data, response) = try await URLSession.shared.data(for: request)
+            (data, response) = try await NetworkClient.session.data(for: request)
         } catch {
             throw CleanupError.networkError(error.localizedDescription)
         }
@@ -113,5 +146,14 @@ final class LLMCleanupService {
         let cleaned = content.trimmingCharacters(in: .whitespacesAndNewlines)
         print("[LLMCleanup] Cleaned: \(cleaned)")
         return cleaned
+    }
+}
+
+private extension Character {
+    var isCJKIdeograph: Bool {
+        guard let scalar = unicodeScalars.first?.value else { return false }
+        return (0x4E00...0x9FFF).contains(scalar)
+            || (0x3400...0x4DBF).contains(scalar)
+            || (0x20000...0x2A6DF).contains(scalar)
     }
 }

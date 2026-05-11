@@ -64,13 +64,20 @@ final class DictationPipeline {
             guard let self = self else { return }
             switch event {
             case .singleModifierDown:
-                // "Hold to talk" — start on press
-                if self.state == .idle { self.startRecording() }
+                // "Hold to talk" — start on press. Prewarm the TLS connection
+                // to api.openai.com now so it's ready by the time the user
+                // releases the key (~1-3s later) and we POST the audio.
+                if self.state == .idle {
+                    NetworkClient.prewarm()
+                    self.startRecording()
+                }
             case .singleModifierUp:
                 // "Hold to talk" — stop on release
                 if self.state == .recording { self.stopAndProcess() }
             case .comboPress:
-                // "Press to toggle"
+                // "Press to toggle". Prewarm on the press that starts a
+                // recording; harmless (no-op) on the press that stops it.
+                if self.state == .idle { NetworkClient.prewarm() }
                 self.handleToggle()
             case .cancel:
                 self.handleCancel()
@@ -109,6 +116,10 @@ final class DictationPipeline {
         )
 
         print("[Pipeline] Ready. Press \(hotkeyManager.currentHotkey.displayName) to dictate.")
+
+        // Establish the TLS + HTTP/2 connection at app launch so the very
+        // first dictation doesn't pay the handshake cost.
+        NetworkClient.prewarm()
 
         #if DEBUG
         startDevTriggerPolling()
@@ -261,13 +272,28 @@ final class DictationPipeline {
                 return
             }
 
-            // Step 2: Cleanup (with personal vocabulary)
-            print("[Pipeline] Cleaning up...")
+            // Step 2: Cleanup (with personal vocabulary). Skipped when the
+            // raw text looks clean enough — saves ~4s LLM round trip on speech
+            // that doesn't need it (cleanup mode = .auto / .never).
             let llmStart = Date()
-            let cleanedText = try await cleanupService.cleanup(
+            let cleanedText: String
+            switch Config.cleanupMode {
+            case .never:
+                print("[Pipeline] Cleanup skipped (mode=never)")
+                cleanedText = rawText
+            case .auto where LLMCleanupService.canSkipCleanup(
                 rawText: rawText,
                 vocabulary: self.vocabularyStore.current
-            )
+            ):
+                print("[Pipeline] Cleanup skipped (auto heuristic)")
+                cleanedText = rawText
+            case .auto, .always:
+                print("[Pipeline] Cleaning up...")
+                cleanedText = try await cleanupService.cleanup(
+                    rawText: rawText,
+                    vocabulary: self.vocabularyStore.current
+                )
+            }
             llmLatency = Date().timeIntervalSince(llmStart)
 
             if cleanedText.isEmpty {
